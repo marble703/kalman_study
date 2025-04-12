@@ -32,7 +32,7 @@ BraceWrapping:                                        # 大括号包装(指定�
 BreakConstructorInitializers: AfterColon              # 构造函数初始化断行风格
 BreakInheritanceList: AfterColon                      # 继承链断行风格
 BreakStringLiterals: false                            # 字符串断行风格
-ColumnLimit: 80                                        # 列数限制（0：不限制）
+ColumnLimit: 90                                        # 列数限制（0：不限制）
 CompactNamespaces: false                              # 紧凑命名空间
 ConstructorInitializerAllOnOneLineOrOnePerLine: true  # 构造函数初始化断行风格（已弃用）
 ConstructorInitializerIndentWidth: 4                  # 构造函数初始化缩进宽度
