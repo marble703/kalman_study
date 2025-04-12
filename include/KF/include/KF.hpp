@@ -5,20 +5,34 @@
 class KF {
 public:
     /**
-     * @brief 完整模型构造,不初始化dt
+     * @brief 完整模型构造
      * 
-     * @param f // 状态转移矩阵(固定)
-     * @param h // 观测矩阵(固定)
-     * @param b // 控制输入矩阵(固定)
-     * @param q // 过程噪声协方差矩阵(可变)
-     * @param r // 观测噪声协方差矩阵(可变)
+     * @param f  // 状态转移矩阵(固定)
+     * @param h  // 观测矩阵(固定)
+     * @param b  // 控制输入矩阵(固定)
+     * @param q  // 过程噪声协方差矩阵(可变)
+     * @param r  // 观测噪声协方差矩阵(可变)
+     * @param dt // 时间间隔
      */
     KF(const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& f,
        const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& h,
        const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& b,
        const Eigen::Ref<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& q,
-       const Eigen::Ref<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& r);
+       const Eigen::Ref<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& r,
+       double dt = 0.01);
+
+    /**
+     * @brief 拷贝构造函数,只拷贝模型
+     */
     KF(const KF& kf);
+
+    /**
+     * @brief 拷贝赋值函数,复制所有成员变量
+     * @param kf 需要复制的KF对象
+     * @return 返回当前对象的引用
+     */
+    KF& operator=(const KF& kf);
+
     ~KF();
 
     /**
@@ -30,9 +44,9 @@ public:
              initState);
 
     /**
-     * @brief 使用观察值和时间间隔更新卡尔曼滤波器,预测下一帧,并更新卡尔曼增益矩阵
-     * @brief 使用默认观测矩阵h
-     * @param measurement 观察值
+     * @brief 使用观测值和时间间隔更新卡尔曼滤波器,预测下一帧,并更新卡尔曼增益矩阵
+     * @note 使用默认观测矩阵h
+     * @param measurement 观测值
      * @param dt 时间间隔
      */
     void update(
@@ -41,20 +55,24 @@ public:
         float dt
     );
 
+    /**
+     * @brief 使用观测值更新卡尔曼滤波器,预测下一帧,并更新卡尔曼增益矩阵
+     * @note 使用默认观测矩阵h
+     * @param measurement 观测值
+     */
     void
     update(const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
                measurement);
 
     /**
      * @brief 使用观测值更新卡尔曼滤波器
-     * @brief 使用默认观测矩阵h
      * @param measurement 观测值
      */
     void updateKalmanGain();
 
     /**
      * @brief 使用控制量更新卡尔曼滤波器
-     * @brief 使用默认控制输入矩阵b
+     * @note 使用默认控制输入矩阵b
      * @param controlInput 控制输入
      */
     void
@@ -62,18 +80,37 @@ public:
                 controlInput);
 
     /**
+     * @brief 使用传入的时间间隔预测一帧
+     * @param dt 时间间隔
+     */
+    void predict(float dt);
+
+    /**
      * @brief 预测一帧
+     * @note 使用默认时间间隔
      * 
      */
     void predict();
-    void predict(float dt);
 
-    void resetState();
+    /**
+     * @brief 重置状态
+     * @param currentState 设置模型状态矩阵
+     */
     void resetState(
         const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
-            measurement
+            currentState
     );
 
+    /**
+     * @brief 重置状态
+     * @note 模型当前状态矩阵重置到默认初始状态
+     */
+    void resetState();
+
+    /**
+     * @brief 获取当前状态
+     * @return 当前状态矩阵
+     */
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> getState() const;
 
 private:
@@ -91,8 +128,8 @@ private:
         b_; // 控制输入矩阵,大小为StateSize_ * ControlSize_
 
     // 初始量
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-        initState_; // 初始状态矩阵,大小为StateSize_
+    Eigen::Matrix<double, Eigen::Dynamic, 1>
+        initState_; // 初始状态矩阵,大小为StateSize_ * 1
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
         p0_; // 初始协方差矩阵,大小为StateSize_ * StateSize_
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
@@ -111,14 +148,15 @@ private:
     // 当前量
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
         current_state_; // 当前状态矩阵,大小为StateSize_*StateSize_
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-        controlInput_; // 控制输入矩阵,大小为ControlSize_
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
-        measurement_; // 观测值矩阵,大小为ObservationSize_
+    Eigen::Matrix<double, Eigen::Dynamic, 1>
+        controlInput_; // 控制输入矩阵,大小为ControlSize_ * 1
+    Eigen::Matrix<double, Eigen::Dynamic, 1>
+        measurement_; // 观测值矩阵,大小为ObservationSize_ * 1
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
         KalmanGain_; // 卡尔曼增益矩阵,大小为StateSize_ * ObservationSize_
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
         p_; // 协方差矩阵,大小为StateSize_ * StateSize_
+
     // 预测量
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> predictedState_; // 预测状态矩阵
 
