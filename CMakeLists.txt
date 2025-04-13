@@ -21,7 +21,6 @@ find_package(OpenCV REQUIRED)
 
 ament_auto_find_build_dependencies()
 
-# 添加 include 目录
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
@@ -40,7 +39,24 @@ ament_auto_add_executable(${PROJECT_NAME}_node
 )
 
 # 确保 include 目录被添加到目标
-target_include_directories(${PROJECT_NAME}_node PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME}_node PUBLIC ${PROJECT_SOURCE_DIR}/include)
+
+# 添加 KF 库
+add_library(kf_lib STATIC
+    include/KF/src/KF.cpp
+)
+
+# 确保 KF 库可以找到头文件
+target_include_directories(kf_lib PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+# 将 kf_lib 添加到链接列表中
+target_link_libraries(${PROJECT_NAME}_node
+    kf_lib
+    ${cpp_typesupport_target}
+    ${OpenCV_LIBS}
+)
 
 target_link_libraries(${PROJECT_NAME}_node
     ${cpp_typesupport_target}

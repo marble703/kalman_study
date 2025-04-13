@@ -1,11 +1,9 @@
 #include <eigen3/Eigen/Dense>
-#include <eigen3/Eigen/src/Core/Matrix.h>
-#include <eigen3/Eigen/src/Core/util/Constants.h>
 
 class KF {
 public:
     /**
-     * @brief 完整模型构造
+     * @brief 完整构造
      * 
      * @param f  // 状态转移矩阵(固定)
      * @param h  // 观测矩阵(固定)
@@ -14,12 +12,23 @@ public:
      * @param r  // 观测噪声协方差矩阵(可变)
      * @param dt // 时间间隔
      */
-    KF(const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& f,
-       const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& h,
-       const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& b,
-       const Eigen::Ref<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& q,
-       const Eigen::Ref<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>& r,
+    KF(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f,
+       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h,
+       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b,
+       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> q,
+       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r,
        double dt = 0.01);
+
+    /**
+    * @brief 仅模型构造,仅初始化模型
+    * 
+    * @param f // 状态转移矩阵(固定)
+    * @param h // 观测矩阵(固定)
+    * @param b // 控制输入矩阵(固定)
+    */
+    KF(Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f,
+       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h,
+       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b);
 
     /**
      * @brief 拷贝构造函数,只拷贝模型
@@ -33,15 +42,13 @@ public:
      */
     KF& operator=(const KF& kf);
 
-    ~KF();
+    ~KF() = default;
 
     /**
      * @brief 传入初始状态,初始化卡尔曼滤波器
      * @param initState 初始状态
      */
-    void
-    init(const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
-             initState);
+    void init(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& initState);
 
     /**
      * @brief 使用观测值和时间间隔更新卡尔曼滤波器,预测下一帧,并更新卡尔曼增益矩阵
@@ -50,8 +57,7 @@ public:
      * @param dt 时间间隔
      */
     void update(
-        const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
-            measurement,
+        const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& measurement,
         float dt
     );
 
@@ -60,9 +66,7 @@ public:
      * @note 使用默认观测矩阵h
      * @param measurement 观测值
      */
-    void
-    update(const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
-               measurement);
+    void update(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& measurement);
 
     /**
      * @brief 使用观测值更新卡尔曼滤波器
@@ -75,9 +79,8 @@ public:
      * @note 使用默认控制输入矩阵b
      * @param controlInput 控制输入
      */
-    void
-    control(const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
-                controlInput);
+    void control(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& controlInput
+    );
 
     /**
      * @brief 使用传入的时间间隔预测一帧
@@ -96,10 +99,8 @@ public:
      * @brief 重置状态
      * @param currentState 设置模型状态矩阵
      */
-    void resetState(
-        const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
-            currentState
-    );
+    void
+    resetState(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& currentState);
 
     /**
      * @brief 重置状态
@@ -120,11 +121,11 @@ private:
     size_t ControlSize_;     // 控制输入维度
 
     // 模型矩阵(固定)
-    const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
+    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
         f_; // 状态转移矩阵,大小为StateSize_ * StateSize_
-    const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
+    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
         h_; // 观测矩阵,大小为ObservationSize_ * StateSize_
-    const Eigen::Ref<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
+    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
         b_; // 控制输入矩阵,大小为StateSize_ * ControlSize_
 
     // 初始量
@@ -138,9 +139,9 @@ private:
         r0_; // 初始观测噪声协方差矩阵,大小为ObservationSize_ * ObservationSize_
 
     // 噪声协方差矩阵
-    const Eigen::Ref<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
         q_; // 过程噪声协方差矩阵,大小为StateSize_ * StateSize_
-    const Eigen::Ref<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>>&
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
         r_; // 观测噪声协方差矩阵,大小为ObservationSize_ * ObservationSize_
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>
         k_; // 卡尔曼增益矩阵,大小为StateSize_ * ObservationSize_
