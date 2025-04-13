@@ -38,17 +38,16 @@ ament_auto_add_executable(${PROJECT_NAME}_node
     DIRECTORY src
 )
 
-# 确保 include 目录被添加到目标
-target_include_directories(${PROJECT_NAME}_node PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME}_node PUBLIC ${PROJECT_SOURCE_DIR}/Fliter)
 
 # 添加 KF 库
 add_library(kf_lib STATIC
-    include/KF/src/KF.cpp
+    Fliter/KF/src/KF.cpp
 )
 
 # 确保 KF 库可以找到头文件
 target_include_directories(kf_lib PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/Fliter
 )
 
 # 将 kf_lib 添加到链接列表中

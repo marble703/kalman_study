@@ -42,6 +42,8 @@ public:
      */
     KF& operator=(const KF& kf);
 
+    KF() = default;
+
     ~KF() = default;
 
     /**
