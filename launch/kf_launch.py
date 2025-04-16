@@ -22,8 +22,7 @@ def generate_launch_description():
                 executable=executable_name,
                 output='screen',
                 parameters=[config],
-                emulate_tty=True,
-                prefix='gnome-terminal -- gdb -ex "set logging file ./debug/gdb/kftest_gdb.txt" -ex "set logging enabled" --args'
+                emulate_tty=True
             ),
         ]
     )

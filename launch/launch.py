@@ -6,17 +6,19 @@ from launch import LaunchDescription
 from launch.actions import GroupAction
 from launch_ros.actions import Node
 
+launch_name = "kftest"
+
 def generate_launch_description():
     config = os.path.join(
-        get_package_share_directory('kftest'),
+        get_package_share_directory(launch_name),
         'config', 'config.yaml'
     )
 
     load_nodes=GroupAction(
         actions=[
             Node(
-                package='kftest',
-                executable='kftest_node',
+                package=launch_name,
+                executable=launch_name + '_node',
                 output='screen',
                 parameters=[config],
                 emulate_tty=True
