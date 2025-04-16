@@ -8,15 +8,15 @@ public:
      * @param f  // 状态转移矩阵(固定)
      * @param h  // 观测矩阵(固定)
      * @param b  // 控制输入矩阵(固定)
-     * @param q  // 过程噪声协方差矩阵(可变)
-     * @param r  // 观测噪声协方差矩阵(可变)
+     * @param q  // 过程噪声协方差矩阵(固定)
+     * @param r  // 观测噪声协方差矩阵(固定)
      * @param dt // 时间间隔
      */
     KF(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f,
        const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h,
        const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b,
-       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> q,
-       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r,
+       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> q,
+       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r,
        double dt = 0.01);
 
     /**
@@ -26,9 +26,9 @@ public:
     * @param h // 观测矩阵(固定)
     * @param b // 控制输入矩阵(固定)
     */
-    KF(Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f,
-       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h,
-       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b);
+    KF(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f,
+       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h,
+       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b);
 
     /**
      * @brief 拷贝构造函数,只拷贝模型
@@ -71,12 +71,6 @@ public:
     void update(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& measurement);
 
     /**
-     * @brief 使用观测值更新卡尔曼滤波器
-     * @param measurement 观测值
-     */
-    void updateKalmanGain();
-
-    /**
      * @brief 使用控制量更新卡尔曼滤波器
      * @note 使用默认控制输入矩阵b
      * @param controlInput 控制输入
@@ -117,6 +111,12 @@ public:
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> getState() const;
 
 private:
+    /**
+     * @brief 使用观测值更新卡尔曼滤波器
+     * @param measurement 观测值
+     */
+    void updateKalmanGain();
+
     // 矩阵维度
     size_t ObservationSize_; // 观测维度
     size_t StateSize_;       // 状态维度

@@ -4,8 +4,8 @@ KF::KF(
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f,
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h,
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b,
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> q,
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r,
+    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> q,
+    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r,
     double dt
 ):
     f_(f),
