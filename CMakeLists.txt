@@ -21,8 +21,6 @@ find_package(OpenCV REQUIRED)
 
 ament_auto_find_build_dependencies()
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
-
 rosidl_generate_interfaces(${PROJECT_NAME}
     "msg/Autoaim.msg"
     DEPENDENCIES
@@ -43,9 +41,9 @@ target_include_directories(${PROJECT_NAME}_node PUBLIC ${PROJECT_SOURCE_DIR}/Fli
 # 添加 KF 库
 add_library(kf_lib STATIC
     Fliter/KF/src/KF.cpp
+    Fliter/EKF/src/EKF.cpp
 )
 
-# 确保 KF 库可以找到头文件
 target_include_directories(kf_lib PUBLIC
     ${PROJECT_SOURCE_DIR}/Fliter
 )
@@ -53,11 +51,6 @@ target_include_directories(kf_lib PUBLIC
 # 将 kf_lib 添加到链接列表中
 target_link_libraries(${PROJECT_NAME}_node
     kf_lib
-    ${cpp_typesupport_target}
-    ${OpenCV_LIBS}
-)
-
-target_link_libraries(${PROJECT_NAME}_node
     ${cpp_typesupport_target}
     ${OpenCV_LIBS}
 )
