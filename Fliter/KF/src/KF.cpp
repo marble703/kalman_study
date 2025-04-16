@@ -1,11 +1,11 @@
 #include "KF/include/KF.hpp"
 
 KF::KF(
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f,
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h,
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b,
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> q,
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r,
+    const Eigen::MatrixXd f,
+    const Eigen::MatrixXd h,
+    const Eigen::MatrixXd b,
+    const Eigen::MatrixXd q,
+    const Eigen::MatrixXd r,
     double dt
 ):
     f_(f),
@@ -37,7 +37,7 @@ KF::KF(
     this->ControlSize_ = b_.rows();     // 控制输入维度
 
     // 初始化其他矩阵大小
-    this->k_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Zero(
+    this->k_ = Eigen::MatrixXd::Zero(
         this->StateSize_,
         this->ObservationSize_
     ); // 卡尔曼增益矩阵
@@ -45,15 +45,15 @@ KF::KF(
         this->StateSize_,
         1
     ); // 初始状态矩阵
-    this->p0_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Identity(
+    this->p0_ = Eigen::MatrixXd::Identity(
         this->StateSize_,
         this->StateSize_
     ); // 初始协方差矩阵
-    this->q0_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Identity(
+    this->q0_ = Eigen::MatrixXd::Identity(
         this->StateSize_,
         this->StateSize_
     ); // 初始过程噪声协方差矩阵
-    this->r0_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Identity(
+    this->r0_ = Eigen::MatrixXd::Identity(
         this->ObservationSize_,
         this->ObservationSize_
     ); // 初始观测噪声协方差矩阵
@@ -70,22 +70,22 @@ KF::KF(
         this->ObservationSize_,
         1
     ); // 观测值矩阵
-    this->KalmanGain_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Zero(
+    this->KalmanGain_ = Eigen::MatrixXd::Zero(
         this->StateSize_,
         this->ObservationSize_
     ); // 卡尔曼增益矩阵
-    this->p_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Identity(
+    this->p_ = Eigen::MatrixXd::Identity(
         this->StateSize_,
         this->StateSize_
     ); // 协方差矩阵
 
-    this->predictedState_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Zero(
+    this->predictedState_ = Eigen::MatrixXd::Zero(
         this->StateSize_,
         this->StateSize_
     ); // 预测状态矩阵
 }
 
-void KF::init(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& initState) {
+void KF::init(const Eigen::MatrixXd& initState) {
     assert(
         initState.rows() == f_.rows() && initState.cols() == 1 && "初始状态矩阵维度不匹配"
     );
@@ -93,7 +93,7 @@ void KF::init(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& initS
     this->current_state_ = this->initState_;
 }
 
-void KF::update(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& measurement
+void KF::update(const Eigen::MatrixXd& measurement
 ) {
     assert(measurement.rows() == h_.cols() && "测量矩阵维度不匹配");
     assert(measurement.cols() == 1 && "测量矩阵必须是列向量");
@@ -105,7 +105,7 @@ void KF::update(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& mea
 }
 
 void KF::update(
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& measurement,
+    const Eigen::MatrixXd& measurement,
     float dt
 ) {
     assert(measurement.rows() == h_.cols() && "测量矩阵维度不匹配");
@@ -143,7 +143,7 @@ void KF::updateKalmanGain() {
     this->current_state_ = this->current_state_
         + this->k_ * (this->measurement_ - h_ * this->current_state_);
     // 更新协方差矩阵
-    p_ = (Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Identity(
+    p_ = (Eigen::MatrixXd::Identity(
               f_.rows(),
               f_.cols()
           )
@@ -151,7 +151,7 @@ void KF::updateKalmanGain() {
         * p_;
 }
 
-void KF::control(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& controlInput
+void KF::control(const Eigen::MatrixXd& controlInput
 ) {
     this->controlInput_ = controlInput;
     this->current_state_ = f_ * this->current_state_ + b_ * this->controlInput_;
@@ -161,11 +161,11 @@ void KF::resetState() {
     this->current_state_ = this->initState_;
 }
 void KF::resetState(
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& currentState
+    const Eigen::MatrixXd& currentState
 ) {
     this->current_state_ = currentState;
 }
 
-Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> KF::getState() const {
+Eigen::MatrixXd KF::getState() const {
     return this->current_state_;
 }

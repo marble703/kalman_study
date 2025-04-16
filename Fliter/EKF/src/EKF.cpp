@@ -2,11 +2,11 @@
 #include <cassert>
 
 EKF::EKF(
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f,
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h,
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b,
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> q,
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r,
+    const Eigen::MatrixXd f,
+    const Eigen::MatrixXd h,
+    const Eigen::MatrixXd b,
+    Eigen::MatrixXd q,
+    Eigen::MatrixXd r,
     double dt
 ):
     f_(f),
@@ -27,27 +27,27 @@ EKF::EKF(
     StateSize_ = f_.rows();
     ControlSize_ = b_.rows();
 
-    k_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Zero(StateSize_, ObservationSize_);
+    k_ = Eigen::MatrixXd::Zero(StateSize_, ObservationSize_);
     initState_ = Eigen::Matrix<double, Eigen::Dynamic, 1>::Zero(StateSize_, 1);
-    p0_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Identity(StateSize_, StateSize_);
-    q0_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Identity(StateSize_, StateSize_);
-    r0_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Identity(ObservationSize_, ObservationSize_);
+    p0_ = Eigen::MatrixXd::Identity(StateSize_, StateSize_);
+    q0_ = Eigen::MatrixXd::Identity(StateSize_, StateSize_);
+    r0_ = Eigen::MatrixXd::Identity(ObservationSize_, ObservationSize_);
 
     current_state_ = Eigen::Matrix<double, Eigen::Dynamic, 1>::Zero(StateSize_, 1);
     controlInput_ = Eigen::Matrix<double, Eigen::Dynamic, 1>::Zero(ControlSize_, 1);
     measurement_ = Eigen::Matrix<double, Eigen::Dynamic, 1>::Zero(ObservationSize_, 1);
-    KalmanGain_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Zero(StateSize_, ObservationSize_);
-    p_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Identity(StateSize_, StateSize_);
-    predictedState_ = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Zero(StateSize_, StateSize_);
+    KalmanGain_ = Eigen::MatrixXd::Zero(StateSize_, ObservationSize_);
+    p_ = Eigen::MatrixXd::Identity(StateSize_, StateSize_);
+    predictedState_ = Eigen::MatrixXd::Zero(StateSize_, StateSize_);
 }
 
-void EKF::init(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& initState) {
+void EKF::init(const Eigen::MatrixXd& initState) {
     assert(initState.rows() == f_.rows() && initState.cols() == 1 && "初始状态矩阵维度不匹配");
     initState_ = initState;
     current_state_ = initState_;
 }
 
-void EKF::update(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& measurement) {
+void EKF::update(const Eigen::MatrixXd& measurement) {
     assert(measurement.rows() == h_.cols() && "测量矩阵维度不匹配");
     assert(measurement.cols() == 1 && "测量矩阵必须是列向量");
     measurement_ = measurement;
@@ -55,7 +55,7 @@ void EKF::update(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& me
     updateKalmanGain();
 }
 
-void EKF::update(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& measurement, float dt) {
+void EKF::update(const Eigen::MatrixXd& measurement, float dt) {
     assert(measurement.rows() == h_.cols() && "测量矩阵维度不匹配");
     assert(measurement.cols() == 1 && "测量矩阵必须是列向量");
     assert(dt > 0 && "时间间隔 dt 必须大于 0");
@@ -79,10 +79,10 @@ void EKF::predict(float dt) {
 void EKF::updateKalmanGain() {
     k_ = p_ * h_.transpose() * (h_ * p_ * h_.transpose() + r_).inverse();
     current_state_ = current_state_ + k_ * (measurement_ - h_ * current_state_);
-    p_ = (Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>::Identity(f_.rows(), f_.cols()) - k_ * h_) * p_;
+    p_ = (Eigen::MatrixXd::Identity(f_.rows(), f_.cols()) - k_ * h_) * p_;
 }
 
-void EKF::control(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& controlInput) {
+void EKF::control(const Eigen::MatrixXd& controlInput) {
     controlInput_ = controlInput;
     current_state_ = f_ * current_state_ + b_ * controlInput_;
 }
@@ -91,10 +91,10 @@ void EKF::resetState() {
     current_state_ = initState_;
 }
 
-void EKF::resetState(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& currentState) {
+void EKF::resetState(const Eigen::MatrixXd& currentState) {
     current_state_ = currentState;
 }
 
-Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> EKF::getState() const {
+Eigen::MatrixXd EKF::getState() const {
     return current_state_;
 }

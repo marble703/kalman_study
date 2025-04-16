@@ -2,16 +2,16 @@
 
 class EKF {
 public:
-    EKF(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f,
-        const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h,
-        const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b,
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> q,
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r,
+    EKF(const Eigen::MatrixXd f,
+        const Eigen::MatrixXd h,
+        const Eigen::MatrixXd b,
+        Eigen::MatrixXd q,
+        Eigen::MatrixXd r,
         double dt = 0.01);
 
-    EKF(Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f,
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h,
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b);
+    EKF(Eigen::MatrixXd f,
+        Eigen::MatrixXd h,
+        Eigen::MatrixXd b);
 
     EKF(const EKF& ekf);
 
@@ -21,51 +21,51 @@ public:
 
     ~EKF() = default;
 
-    void init(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& initState);
+    void init(const Eigen::MatrixXd& initState);
 
-    void update(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& measurement, float dt);
+    void update(const Eigen::MatrixXd& measurement, float dt);
 
-    void update(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& measurement);
+    void update(const Eigen::MatrixXd& measurement);
 
     void updateKalmanGain();
 
-    void control(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& controlInput);
+    void control(const Eigen::MatrixXd& controlInput);
 
     void predict(float dt);
 
     void predict();
 
-    void resetState(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>& currentState);
+    void resetState(const Eigen::MatrixXd& currentState);
 
     void resetState();
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> getState() const;
+    Eigen::MatrixXd getState() const;
 
 private:
     size_t ObservationSize_;
     size_t StateSize_;
     size_t ControlSize_;
 
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> f_;
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> h_;
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> b_;
+    const Eigen::MatrixXd f_;
+    const Eigen::MatrixXd h_;
+    const Eigen::MatrixXd b_;
 
     Eigen::Matrix<double, Eigen::Dynamic, 1> initState_;
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> p0_;
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> q0_;
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r0_;
+    Eigen::MatrixXd p0_;
+    Eigen::MatrixXd q0_;
+    Eigen::MatrixXd r0_;
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> q_;
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> r_;
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> k_;
+    Eigen::MatrixXd q_;
+    Eigen::MatrixXd r_;
+    Eigen::MatrixXd k_;
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> current_state_;
+    Eigen::MatrixXd current_state_;
     Eigen::Matrix<double, Eigen::Dynamic, 1> controlInput_;
     Eigen::Matrix<double, Eigen::Dynamic, 1> measurement_;
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> KalmanGain_;
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> p_;
+    Eigen::MatrixXd KalmanGain_;
+    Eigen::MatrixXd p_;
 
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> predictedState_;
+    Eigen::MatrixXd predictedState_;
 
     double dt_;
 };
