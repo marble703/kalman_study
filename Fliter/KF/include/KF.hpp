@@ -1,4 +1,5 @@
 #include <eigen3/Eigen/Dense>
+#include <variant>
 
 class KF {
 public:
@@ -17,7 +18,7 @@ public:
        const Eigen::MatrixXd b,
        const Eigen::MatrixXd q,
        const Eigen::MatrixXd r,
-       double dt = 0.01);
+       std::variant<double> dt);
 
     /**
     * @brief 仅模型构造,仅初始化模型
@@ -28,7 +29,8 @@ public:
     */
     KF(const Eigen::MatrixXd f,
        const Eigen::MatrixXd h,
-       const Eigen::MatrixXd b);
+       const Eigen::MatrixXd b,
+       std::variant<double> dt);
 
     /**
      * @brief 拷贝构造函数,只拷贝模型
@@ -60,7 +62,8 @@ public:
      */
     void update(
         const Eigen::MatrixXd& measurement,
-        float dt
+        float dt,
+        bool setDefault = false
     );
 
     /**
