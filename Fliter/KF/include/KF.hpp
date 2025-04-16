@@ -1,4 +1,5 @@
 #include <eigen3/Eigen/Dense>
+#include "BindMatrix/BindMatrix.hpp"
 #include <variant>
 
 class KF {
