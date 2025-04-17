@@ -45,6 +45,10 @@ add_library(kf_lib STATIC
     Fliter/EKF/src/EKF.cpp
 )
 
+set(SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/Fliter/utils
+)
+
 target_include_directories(kf_lib PUBLIC
     ${PROJECT_SOURCE_DIR}/Fliter
     ${PROJECT_SOURCE_DIR}/utils

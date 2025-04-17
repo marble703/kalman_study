@@ -1,93 +1,112 @@
 #include <eigen3/Eigen/Dense>
 #include <memory>
 
+namespace utils {
+
 // 编译期固定值的元素生成器
-template <auto Value>
+template<auto Value>
 constexpr auto make_element() {
-    return []() constexpr { return Value; };
+    return []() constexpr {
+        return Value;
+    };
 }
 
 // 运行时动态值的元素生成器（按值捕获）
-template <typename T>
+template<typename T>
 auto make_element(T&& value) {
     return [value = std::forward<T>(value)]() { return value; };
 }
 
-/**
- * @brief 包装Eigen矩阵,实现使用lambda表达式绑定动态元素到矩阵
- * 
- */
 class BindableMatrixXd {
 public:
-    /**
-    * @brief 构造函数，仅初始化矩阵为单位矩阵
-    * 
-    * @param rows 
-    * @param cols 
-    */
-    BindableMatrixXd(int rows, int cols): matrix_(rows, cols) {
-        matrix_.setIdentity();
-    }
+    BindableMatrixXd();
+    BindableMatrixXd(int rows, int cols);
+    BindableMatrixXd(const Eigen::MatrixXd& mat);
 
     /**
-     * @brief 构造函数，初始化矩阵为固定矩阵
+     * @brief 构造函数，支持类似矩阵初始化的方式
      * 
-     * @param mat 矩阵数据
+     * @param rows 行数
+     * @param cols 列数
+     * @param initializer 初始化列表，包含固定值或lambda表达式
      */
-    BindableMatrixXd(const Eigen::MatrixXd& mat): matrix_(mat) {}
+    template <typename T>
+    BindableMatrixXd(int rows, int cols, std::initializer_list<T> initializer);
 
     /**
-     * @brief 绑定一个 lambda 表达式到矩阵元素
+     * @brief 绑定一个函数到矩阵的指定位置
      * 
-     * @param row 矩阵行索引
-     * @param col 矩阵列索引
-     * @param func 绑定的 lambda 表达式
+     * @param row 行索引
+     * @param col 列索引
+     * @param func 绑定的函数
      */
-    void bind(int row, int col, std::function<double(std::shared_ptr<double>)> func) {
-        bindings_.emplace_back(row, col, func);
-    }
+    void bind(int row, int col, std::function<double(std::shared_ptr<double>)> func);
 
     /**
-     * @brief 更新所有绑定的矩阵元素
+     * @brief 更新矩阵的值
      * 
+     * @note 更新矩阵的值
      */
-    void update() {
-        for (const auto& binding: bindings_) {
-            int i = std::get<0>(binding);
-            int j = std::get<1>(binding);
-            matrix_(i, j) = std::get<2>(binding)(arg_);
-        }
-    }
+    void update();
 
-    // 访问元素
-    double operator()(int row, int col) const {
-        assert(
-            row >= 0 && row < matrix_.rows() && col >= 0 && col < matrix_.cols()
-            && "非法矩阵索引"
-        );
+    /**
+     * @brief 获取矩阵的值
+     * 
+     * @param row 行索引
+     * @param col 列索引
+     * @return double 矩阵的值
+     */
+    double operator()(int row, int col) const;
 
-        return matrix_(row, col);
-    }
+    /**
+     * @brief 获取矩阵的行数
+     * 
+     * @return int 矩阵的行数
+     */
+    int rows() const;
 
-    int rows() const {
-        return matrix_.rows();
-    }
+    /**
+     * @brief 获取矩阵的列数
+     * 
+     * @return int 矩阵的列数
+     */
+    int cols() const;
 
-    int cols() const {
-        return matrix_.cols();
-    }
+    /**
+     * @brief 设置参数
+     * 
+     * @param arg 参数
+     */
+    void setArg(std::shared_ptr<double> arg);
 
-    void setArg(std::shared_ptr<double> arg) {
-        arg_ = arg;
-    }
-    std::shared_ptr<double> getArg() const {
-        return arg_;
+    /**
+     * @brief 获取参数
+     * 
+     * @return std::shared_ptr<double> 参数
+     */
+    std::shared_ptr<double> getArg() const;
+
+    /**
+     * @brief 清除所有绑定
+     * 
+     * @note 该方法将清除所有已绑定的函数
+     */
+    void clearBindings();
+
+    /**
+     * @brief 获取矩阵的引用
+     * 
+     * @return Eigen::MatrixXd& 矩阵的引用
+     */
+    Eigen::MatrixXd& getMatrix() {
+        return matrix_;
     }
 
 private:
-    std::shared_ptr<double> arg_; // 用于存储 lambda 表达式的参数
-
-    Eigen::MatrixXd matrix_; // 基础矩阵
+    std::shared_ptr<double> arg_; // 参数
+    Eigen::MatrixXd matrix_; // 矩阵
     std::vector<std::tuple<int, int, std::function<double(std::shared_ptr<double>)>>>
-        bindings_; // 存储绑定关系
+        bindings_; // 绑定的函数
 };
+
+} // namespace utils
