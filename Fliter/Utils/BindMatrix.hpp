@@ -1,21 +1,10 @@
+#pragma once
+
 #include <eigen3/Eigen/Dense>
+#include <initializer_list>
 #include <memory>
 
 namespace utils {
-
-// 编译期固定值的元素生成器
-template<auto Value>
-constexpr auto make_element() {
-    return []() constexpr {
-        return Value;
-    };
-}
-
-// 运行时动态值的元素生成器（按值捕获）
-template<typename T>
-auto make_element(T&& value) {
-    return [value = std::forward<T>(value)]() { return value; };
-}
 
 class BindableMatrixXd {
 public:
@@ -23,14 +12,16 @@ public:
     BindableMatrixXd(int rows, int cols);
     BindableMatrixXd(const Eigen::MatrixXd& mat);
 
+    BindableMatrixXd(const int rows, const int cols, std::initializer_list<double> initializer);
+
     /**
      * @brief 构造函数，支持类似矩阵初始化的方式
      * 
      * @param rows 行数
      * @param cols 列数
-     * @param initializer 初始化列表，包含固定值或lambda表达式
+     * @param initializer 初始化列表，包含固定值或 lambda 表达式
      */
-    template <typename T>
+    template<typename T>
     BindableMatrixXd(int rows, int cols, std::initializer_list<T> initializer);
 
     /**
@@ -87,24 +78,24 @@ public:
     std::shared_ptr<double> getArg() const;
 
     /**
-     * @brief 清除所有绑定
-     * 
-     * @note 该方法将清除所有已绑定的函数
-     */
-    void clearBindings();
-
-    /**
      * @brief 获取矩阵的引用
      * 
      * @return Eigen::MatrixXd& 矩阵的引用
      */
-    Eigen::MatrixXd& getMatrix() {
-        return matrix_;
-    }
+    Eigen::MatrixXd& getMatrix();
+
+    Eigen::MatrixXd operator+(const Eigen::MatrixXd& other) const;
+    Eigen::MatrixXd operator-(const Eigen::MatrixXd& other) const;
+    Eigen::MatrixXd operator*(const Eigen::MatrixXd& other) const;
+    Eigen::MatrixXd operator/(const Eigen::MatrixXd& other) const;
+    Eigen::MatrixXd operator-() const;
+    Eigen::MatrixXd transpose() const;
+    Eigen::MatrixXd inverse() const;
+
 
 private:
     std::shared_ptr<double> arg_; // 参数
-    Eigen::MatrixXd matrix_; // 矩阵
+    Eigen::MatrixXd matrix_;      // 矩阵
     std::vector<std::tuple<int, int, std::function<double(std::shared_ptr<double>)>>>
         bindings_; // 绑定的函数
 };
