@@ -1,8 +1,9 @@
-#include "KF/include/KF.hpp"
 #include "EKF/include/EKF.hpp"
+#include "KF/include/KF.hpp"
 
 #include "std_msgs/msg/float32.hpp" // IWYU pragma: keep
 #include <iostream>
+#include <memory>
 #include <rclcpp/rclcpp.hpp>
 
 int main() {
@@ -14,21 +15,24 @@ int main() {
     double dt = 0.03;
     double yaw = 0.0;
 
-    Eigen::Matrix<double, 2, 2> f; // 状态转移矩阵
-    f << 1, dt, 0, 1;
+    std::shared_ptr<double> arg = std::make_shared<double>(0.0);
+    utils::BindableMatrixXd bindMatrix(2, 2, { 1.0, *arg, 0.0, 1.0 });
+
+    bindMatrix.setArg(arg);
+    // Eigen::Matrix<double, 2, 2> f; // 状态转移矩阵
+    // f << 1, dt, 0, 1;
+    
     Eigen::Matrix<double, 2, 2> h; // 观测矩阵
     h << 1, 0, 0, 1;
     Eigen::Matrix<double, 2, 1> b; // 控制输入矩阵
     b << 0, 1;
     Eigen::Matrix<double, 2, 2> q; // 过程噪声协方差矩阵
-    q << 0.01, 0, 
-         0, 0.01;
+    q << 0.01, 0, 0, 0.01;
     Eigen::Matrix<double, 2, 2> r; // 观测噪声协方差矩阵
-    r << 1, 0, 
-         0, 1;
+    r << 1, 0, 0, 1;
     Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
     initState << 0, 0;
-    KF kf(f, h, b, q, r, dt);
+    KF kf(bindMatrix.getMatrix(), h, b, q, r, dt);
     kf.init(initState);
 
     auto subscriber = node->create_subscription<std_msgs::msg::Float32>(

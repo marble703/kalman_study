@@ -43,7 +43,11 @@ target_include_directories(${PROJECT_NAME}_node PUBLIC ${PROJECT_SOURCE_DIR}/Fli
 add_library(kf_lib STATIC
     Fliter/KF/src/KF.cpp
     Fliter/EKF/src/EKF.cpp
+    Fliter/Utils/src/BindMatrix.cpp
 )
+
+add_library(utils
+    Fliter/Utils/src/BindMatrix.cpp)
 
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Fliter/utils
@@ -51,7 +55,6 @@ set(SOURCES
 
 target_include_directories(kf_lib PUBLIC
     ${PROJECT_SOURCE_DIR}/Fliter
-    ${PROJECT_SOURCE_DIR}/utils
 )
 
 # 将 kf_lib 添加到链接列表中

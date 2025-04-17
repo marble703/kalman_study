@@ -1,6 +1,9 @@
+#pragma once
+
 #include <eigen3/Eigen/Dense>
-#include "utils/BindMatrix.hpp"
 #include <variant>
+
+#include "Utils/BindMatrix.hpp"
 
 class KF {
 public:
@@ -12,7 +15,7 @@ public:
      * @param b  // 控制输入矩阵(固定)
      * @param q  // 过程噪声协方差矩阵(固定)
      * @param r  // 观测噪声协方差矩阵(固定)
-     * @param dt // 时间间隔
+     * @param dt // 时间间隔(固定)
      */
     KF(const Eigen::MatrixXd f,
        const Eigen::MatrixXd h,
@@ -20,6 +23,22 @@ public:
        const Eigen::MatrixXd q,
        const Eigen::MatrixXd r,
        std::variant<double> dt);
+
+    /**
+     * @brief 动态 dt 构造
+     * 
+     * @param f  // 状态转移矩阵(固定)
+     * @param h  // 观测矩阵(固定)
+     * @param b  // 控制输入矩阵(固定)
+     * @param q  // 过程噪声协方差矩阵(固定)
+     * @param r  // 观测噪声协方差矩阵(固定)
+     * @param dt // 时间间隔(可变)
+     */
+    KF(utils::BindableMatrixXd f,
+       const Eigen::MatrixXd h,
+       const Eigen::MatrixXd b,
+       const Eigen::MatrixXd q,
+       const Eigen::MatrixXd r);
 
     /**
     * @brief 仅模型构造,仅初始化模型
@@ -61,11 +80,7 @@ public:
      * @param measurement 观测值
      * @param dt 时间间隔
      */
-    void update(
-        const Eigen::MatrixXd& measurement,
-        float dt,
-        bool setDefault = false
-    );
+    void update(const Eigen::MatrixXd& measurement, float dt, bool setDefault = false);
 
     /**
      * @brief 使用观测值更新卡尔曼滤波器,预测下一帧,并更新卡尔曼增益矩阵
@@ -79,8 +94,7 @@ public:
      * @note 使用默认控制输入矩阵b
      * @param controlInput 控制输入
      */
-    void control(const Eigen::MatrixXd& controlInput
-    );
+    void control(const Eigen::MatrixXd& controlInput);
 
     /**
      * @brief 使用传入的时间间隔预测一帧
@@ -99,8 +113,7 @@ public:
      * @brief 重置状态
      * @param currentState 设置模型状态矩阵
      */
-    void
-    resetState(const Eigen::MatrixXd& currentState);
+    void resetState(const Eigen::MatrixXd& currentState);
 
     /**
      * @brief 重置状态
@@ -127,42 +140,31 @@ private:
     size_t ControlSize_;     // 控制输入维度
 
     // 模型矩阵(固定)
-    const Eigen::MatrixXd
-        f_; // 状态转移矩阵,大小为StateSize_ * StateSize_
-    const Eigen::MatrixXd
-        h_; // 观测矩阵,大小为ObservationSize_ * StateSize_
-    const Eigen::MatrixXd
-        b_; // 控制输入矩阵,大小为StateSize_ * ControlSize_
+    const utils::BindableMatrixXd f_; // 状态转移矩阵,大小为StateSize_ * StateSize_
+    const Eigen::MatrixXd h_; // 观测矩阵,大小为ObservationSize_ * StateSize_
+    const Eigen::MatrixXd b_; // 控制输入矩阵,大小为StateSize_ * ControlSize_
 
     // 初始量
     Eigen::Matrix<double, Eigen::Dynamic, 1>
-        initState_; // 初始状态矩阵,大小为StateSize_ * 1
-    Eigen::MatrixXd
-        p0_; // 初始协方差矩阵,大小为StateSize_ * StateSize_
-    Eigen::MatrixXd
-        q0_; // 初始过程噪声协方差矩阵,大小为StateSize_ * StateSize_
+        initState_;      // 初始状态矩阵,大小为StateSize_ * 1
+    Eigen::MatrixXd p0_; // 初始协方差矩阵,大小为StateSize_ * StateSize_
+    Eigen::MatrixXd q0_; // 初始过程噪声协方差矩阵,大小为StateSize_ * StateSize_
     Eigen::MatrixXd
         r0_; // 初始观测噪声协方差矩阵,大小为ObservationSize_ * ObservationSize_
 
     // 噪声协方差矩阵
-    Eigen::MatrixXd
-        q_; // 过程噪声协方差矩阵,大小为StateSize_ * StateSize_
-    Eigen::MatrixXd
-        r_; // 观测噪声协方差矩阵,大小为ObservationSize_ * ObservationSize_
-    Eigen::MatrixXd
-        k_; // 卡尔曼增益矩阵,大小为StateSize_ * ObservationSize_
+    Eigen::MatrixXd q_; // 过程噪声协方差矩阵,大小为StateSize_ * StateSize_
+    Eigen::MatrixXd r_; // 观测噪声协方差矩阵,大小为ObservationSize_ * ObservationSize_
+    Eigen::MatrixXd k_; // 卡尔曼增益矩阵,大小为StateSize_ * ObservationSize_
 
     // 当前量
-    Eigen::MatrixXd
-        current_state_; // 当前状态矩阵,大小为StateSize_*StateSize_
+    Eigen::MatrixXd current_state_; // 当前状态矩阵,大小为StateSize_*StateSize_
     Eigen::Matrix<double, Eigen::Dynamic, 1>
         controlInput_; // 控制输入矩阵,大小为ControlSize_ * 1
     Eigen::Matrix<double, Eigen::Dynamic, 1>
-        measurement_; // 观测值矩阵,大小为ObservationSize_ * 1
-    Eigen::MatrixXd
-        KalmanGain_; // 卡尔曼增益矩阵,大小为StateSize_ * ObservationSize_
-    Eigen::MatrixXd
-        p_; // 协方差矩阵,大小为StateSize_ * StateSize_
+        measurement_;            // 观测值矩阵,大小为ObservationSize_ * 1
+    Eigen::MatrixXd KalmanGain_; // 卡尔曼增益矩阵,大小为StateSize_ * ObservationSize_
+    Eigen::MatrixXd p_;          // 协方差矩阵,大小为StateSize_ * StateSize_
 
     // 预测量
     Eigen::MatrixXd predictedState_; // 预测状态矩阵

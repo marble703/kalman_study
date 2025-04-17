@@ -85,6 +85,18 @@ KF::KF(
     ); // 预测状态矩阵
 }
 
+KF::KF(utils::BindableMatrixXd f,
+    const Eigen::MatrixXd h,
+    const Eigen::MatrixXd b,
+    const Eigen::MatrixXd q,
+    const Eigen::MatrixXd r): f_(f), h_(h),
+    b_(b),
+    q_(q),
+    r_(r),
+    dt_(*f.getArg().get()){
+
+    }
+
 KF::KF(
     const Eigen::MatrixXd f,
     const Eigen::MatrixXd h,
