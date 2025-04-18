@@ -21,7 +21,7 @@ public:
      * @brief 静态工厂方法，创建一个包含任意类型元素的 BindableMatrixXd
      * 
      * 用法示例：
-     * auto matrix = BindableMatrixXd::create(2, 2, 1.0, [arg](){ return *arg; }, 0.0, 1.0);
+     * auto matrix = utils::BindableMatrixXd::create(2, 2, 1.0, [arg](){ return *arg; }, 0.0, 1.0);
      * 
      * @tparam Args 参数包类型
      * @param rows 行数
