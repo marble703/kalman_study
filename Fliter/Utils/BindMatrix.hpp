@@ -30,8 +30,11 @@ public:
      * @return BindableMatrixXd 
      */
     template<typename... Args>
-    static BindableMatrixXd create(int rows, int cols, Args&&... args) {
+    static BindableMatrixXd
+    create(int rows, int cols, bool autoUpdate = false, Args&&... args) {
         BindableMatrixXd result;
+
+        result.autoUpdate_ = autoUpdate;
         result.matrix_.resize(rows, cols);
 
         // 将参数包展开为元组
@@ -159,10 +162,11 @@ private:
         (processArg(matrix, Is, std::get<Is>(tuple)), ...);
     }
 
-    std::shared_ptr<double> arg_; // 参数
-    Eigen::MatrixXd matrix_;      // 矩阵
+    std::shared_ptr<double> arg_;    // 参数
+    mutable Eigen::MatrixXd matrix_; // 矩阵
     std::vector<std::tuple<int, int, std::function<double(std::shared_ptr<double>)>>>
         bindings_; // 绑定的函数
+    bool autoUpdate_;
 };
 
 } // namespace utils

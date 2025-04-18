@@ -27,7 +27,7 @@ void BindableMatrixXd::bind(
     bindings_.emplace_back(row, col, func);
 }
 
-void BindableMatrixXd::update() {
+void BindableMatrixXd::update() const {
     assert(arg_ && "参数不能为空");
     if (bindings_.empty()) {
         return;
@@ -36,6 +36,14 @@ void BindableMatrixXd::update() {
         int i = std::get<0>(binding);
         int j = std::get<1>(binding);
         matrix_(i, j) = std::get<2>(binding)(arg_);
+    }
+}
+
+void BindableMatrixXd::update(double arg) const {
+    for (const auto& binding: bindings_) {
+        int i = std::get<0>(binding);
+        int j = std::get<1>(binding);
+        matrix_(i, j) = std::get<2>(binding)(std::make_shared<double>(arg));
     }
 }
 
@@ -65,46 +73,70 @@ std::shared_ptr<double> BindableMatrixXd::getArg() const {
 }
 
 Eigen::MatrixXd& BindableMatrixXd::getMatrix() {
+    if (this->autoUpdate_) {
+        this->update();
+    }
     return matrix_;
 }
 
 Eigen::MatrixXd BindableMatrixXd::operator+(const Eigen::MatrixXd& other) const {
+    if (this->autoUpdate_) {
+        this->update();
+    }
     Eigen::MatrixXd result;
     result = this->matrix_ + other;
     return result;
 }
 
 Eigen::MatrixXd BindableMatrixXd::operator-(const Eigen::MatrixXd& other) const {
+    if (this->autoUpdate_) {
+        this->update();
+    }
     Eigen::MatrixXd result;
     result = this->matrix_ - other;
     return result;
 }
 
 Eigen::MatrixXd BindableMatrixXd::operator*(const Eigen::MatrixXd& other) const {
+    if (this->autoUpdate_) {
+        this->update();
+    }
     Eigen::MatrixXd result;
     result = this->matrix_ * other;
     return result;
 }
 
 Eigen::MatrixXd BindableMatrixXd::operator/(const Eigen::MatrixXd& other) const {
+    if (this->autoUpdate_) {
+        this->update();
+    }
     Eigen::MatrixXd result;
     result = this->matrix_.cwiseQuotient(other);
     return result;
 }
 
 Eigen::MatrixXd BindableMatrixXd::operator-() const {
+    if (this->autoUpdate_) {
+        this->update();
+    }
     Eigen::MatrixXd result;
     result = -this->matrix_;
     return result;
 }
 
 Eigen::MatrixXd BindableMatrixXd::transpose() const {
+    if (this->autoUpdate_) {
+        this->update();
+    }
     Eigen::MatrixXd result;
     result = this->matrix_.transpose();
     return result;
 }
 
 Eigen::MatrixXd BindableMatrixXd::inverse() const {
+    if (this->autoUpdate_) {
+        this->update();
+    }
     Eigen::MatrixXd result;
     result = this->matrix_.inverse();
     return result;
