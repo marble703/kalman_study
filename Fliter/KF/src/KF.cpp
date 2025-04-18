@@ -1,5 +1,4 @@
 #include "KF/include/KF.hpp"
-#include <variant>
 
 KF::KF(
     const Eigen::MatrixXd f,
@@ -16,7 +15,6 @@ KF::KF(
     r_(r),
     dt_(std::get<double>(dt)) {
     assert(f_.rows() == f_.cols() && "状态转移矩阵 f 必须是方阵");
-
     assert(q_.rows() == q_.cols() && "过程噪声协方差矩阵 q 必须是方阵");
     assert(r_.rows() == r_.cols() && "观测噪声协方差矩阵 r 必须是方阵");
 
@@ -87,6 +85,18 @@ KF::KF(
     ); // 预测状态矩阵
 }
 
+KF::KF(utils::BindableMatrixXd f,
+    const Eigen::MatrixXd h,
+    const Eigen::MatrixXd b,
+    const Eigen::MatrixXd q,
+    const Eigen::MatrixXd r): f_(f), h_(h),
+    b_(b),
+    q_(q),
+    r_(r),
+    dt_(*f.getArg().get()){
+
+    }
+
 KF::KF(
     const Eigen::MatrixXd f,
     const Eigen::MatrixXd h,
@@ -114,7 +124,7 @@ void KF::update(const Eigen::MatrixXd& measurement, float dt, bool setDefault) {
     assert(dt > 0 && "时间间隔 dt 必须大于 0");
 
     this->measurement_ = measurement;
-    if(setDefault) {
+    if (setDefault) {
         this->dt_ = dt;
         predict();
         updateKalmanGain();
@@ -123,7 +133,7 @@ void KF::update(const Eigen::MatrixXd& measurement, float dt, bool setDefault) {
 
     predict(dt);
     updateKalmanGain();
-    
+
     return;
 }
 
