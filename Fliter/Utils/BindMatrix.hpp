@@ -60,9 +60,15 @@ public:
     /**
      * @brief 更新矩阵的值
      * 
-     * @note 更新矩阵的值
      */
-    void update();
+    void update() const;
+
+    /**
+     * @brief 更新矩阵的值
+     * 
+     * @param 传入值
+     */
+    void update(double arg) const;
 
     /**
      * @brief 获取矩阵的值
