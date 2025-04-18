@@ -16,12 +16,21 @@ int main() {
     double yaw = 0.0;
 
     std::shared_ptr<double> arg = std::make_shared<double>(0.0);
-    utils::BindableMatrixXd bindMatrix(2, 2, { 1.0, *arg, 0.0, 1.0 });
+
+    // 使用简化的 MatEntry 类型名称
+    auto bindMatrix = utils::BindableMatrixXd::create(
+        2,
+        2,
+        1.0,
+        [arg]() { return *arg; },
+        0.0,
+        1.0
+    );
 
     bindMatrix.setArg(arg);
     // Eigen::Matrix<double, 2, 2> f; // 状态转移矩阵
     // f << 1, dt, 0, 1;
-    
+
     Eigen::Matrix<double, 2, 2> h; // 观测矩阵
     h << 1, 0, 0, 1;
     Eigen::Matrix<double, 2, 1> b; // 控制输入矩阵
