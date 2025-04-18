@@ -13,51 +13,6 @@ BindableMatrixXd::BindableMatrixXd(int rows, int cols): matrix_(rows, cols) {
 
 BindableMatrixXd::BindableMatrixXd(const Eigen::MatrixXd& mat): matrix_(mat) {}
 
-BindableMatrixXd::BindableMatrixXd(
-    const int rows,
-    const int cols,
-    std::initializer_list<double> initializer
-) {
-    matrix_.resize(rows, cols);
-    auto it = initializer.begin();
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            if (it != initializer.end()) {
-                matrix_(i, j) = *it;
-                ++it;
-            } else {
-                throw std::invalid_argument("初始化列表大小与矩阵维度不匹配.");
-            }
-        }
-    }
-}
-template<typename T>
-BindableMatrixXd::BindableMatrixXd(
-    int rows,
-    int cols,
-    std::initializer_list<T> initializer
-) {
-    matrix_.resize(rows, cols);
-    auto it = initializer.begin();
-    for (int i = 0; i < rows; ++i) {
-        for (int j = 0; j < cols; ++j) {
-            for (int j = 0; j < cols; ++j) {
-                if (it != initializer.end()) {
-                    if (std::is_invocable_v<T>) // 检查是否为可调用对象
-                    {
-                        bind(i, j, *it);
-                    } else {
-                        matrix_(i, j) = *it;
-                    }
-                    ++it;
-                } else {
-                    throw std::invalid_argument("初始化列表大小与矩阵维度不匹配.");
-                }
-            }
-        }
-    }
-}
-
 void BindableMatrixXd::bind(
     int row,
     int col,
