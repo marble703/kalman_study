@@ -163,6 +163,7 @@ private:
     }
 
     std::shared_ptr<double> arg_;    // 参数
+    mutable double argValueCache_;           // 参数值缓存
     mutable Eigen::MatrixXd matrix_; // 矩阵
     std::vector<std::tuple<int, int, std::function<double(std::shared_ptr<double>)>>>
         bindings_; // 绑定的函数
