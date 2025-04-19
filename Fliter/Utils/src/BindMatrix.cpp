@@ -29,7 +29,8 @@ void BindableMatrixXd::bind(
 
 void BindableMatrixXd::update() const {
     assert(arg_ && "参数不能为空");
-    if (bindings_.empty()) {
+    // 如果没有绑定函数，或者参数没有变化，则不更新
+    if (bindings_.empty() || this->argValueCache_ == *arg_) {
         return;
     }
     for (const auto& binding: bindings_) {
@@ -37,14 +38,23 @@ void BindableMatrixXd::update() const {
         int j = std::get<1>(binding);
         matrix_(i, j) = std::get<2>(binding)(arg_);
     }
+    // 更新参数值缓存
+    this->argValueCache_ = *arg_;
+    return;
 }
 
 void BindableMatrixXd::update(double arg) const {
+    // 如果没有绑定函数，或者参数没有变化，则不更新
+    if (bindings_.empty() || this->argValueCache_ == arg) {
+        return;
+    }
     for (const auto& binding: bindings_) {
         int i = std::get<0>(binding);
         int j = std::get<1>(binding);
         matrix_(i, j) = std::get<2>(binding)(std::make_shared<double>(arg));
     }
+    // 更新参数值缓存
+    this->argValueCache_ = *arg_;
 }
 
 double BindableMatrixXd::operator()(int row, int col) const {

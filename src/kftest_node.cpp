@@ -17,15 +17,17 @@ int main() {
 
     std::shared_ptr<double> arg = std::make_shared<double>(0.0);
 
-    // 使用简化的 MatEntry 类型名称
+    // clang-format off
     auto bindMatrix = utils::BindableMatrixXd::create(
-        2,
-        2,
-        1.0,
-        [arg]() { return *arg; },
-        0.0,
-        1.0
-    );
+            2,
+            2,
+            false,
+            1.0, [arg]() { return *arg; },
+            0.0, 1.0
+        );
+    // clang-format on
+
+    // 使用简化的 MatEntry 类型名称
 
     bindMatrix.setArg(arg);
     // Eigen::Matrix<double, 2, 2> f; // 状态转移矩阵
