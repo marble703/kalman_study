@@ -57,6 +57,8 @@ target_include_directories(kf_lib PUBLIC
     ${PROJECT_SOURCE_DIR}/Fliter
 )
 
+include_directories(${PROJECT_SOURCE_DIR}/Fliter)
+
 # 将 kf_lib 添加到链接列表中
 target_link_libraries(${PROJECT_NAME}_node
     kf_lib
