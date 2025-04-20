@@ -1,3 +1,6 @@
 /**:
   ros__parameters:
-    Fliter_type: 1
+    # 是否开启调试模式
+    debug: false
+    # 滤波器类型
+    fliter_type: 1
