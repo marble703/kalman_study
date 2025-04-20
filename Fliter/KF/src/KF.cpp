@@ -1,4 +1,5 @@
 #include "KF/include/KF.hpp"
+#include <iostream>
 
 KF::KF(
     const Eigen::MatrixXd f,
@@ -48,30 +49,34 @@ void KF::init(const Eigen::MatrixXd& initState) {
 }
 
 void KF::update(const Eigen::MatrixXd& measurement, double dt, bool setDefault) {
-    assert(measurement.rows() == h_.cols() && "测量矩阵维度不匹配");
     assert(measurement.cols() == 1 && "测量矩阵必须是列向量");
 
     this->measurement_ = measurement;
+    this->dt_ = dt == 0.0 ? dt_ : dt;
+
     if (setDefault) {
-        this->dt_ = dt == 0.0 ? dt_ : dt_;
-        predict();
+        this->current_state_ = f_ * this->current_state_;
+
+        // 预测协方差矩阵
+        p_ = f_ * p_ * f_.transpose() + q_;
         updateKalmanGain();
         return;
     }
 
-    predict(dt);
+    this->current_state_ = f_ * this->current_state_;
+
+    // 预测协方差矩阵
+    p_ = f_ * p_ * f_.transpose() + q_;
     updateKalmanGain();
 
     return;
 }
 
 void KF::predict(double dt) {
-    assert(f_.cols() == current_state_.rows() && "f_ 的列数必须等于 current_state_ 的行数");
+    assert(f_.rows() == current_state_.rows() && "f_ 的列数必须等于 current_state_ 的行数");
     assert((dt > 0 || this->dt_ > 0) && "时间间隔 dt 必须大于 0");
 
-    this->dt_ = dt == 0.0 ? dt_ : dt_;
-
-    f_.update(dt_);
+    this->dt_ = dt == 0.0 ? dt_ : dt;
 
     this->current_state_ = f_ * this->current_state_;
 
@@ -80,13 +85,22 @@ void KF::predict(double dt) {
 }
 
 void KF::updateKalmanGain() {
+    // 检查维度匹配
+    assert(this->measurement_.rows() == h_.rows() && "测量矩阵维度不匹配");
+    assert(h_.rows() > 0 && h_.cols() > 0 && "h矩阵维度不能为0");
+    assert(p_.rows() == StateSize_ && p_.cols() == StateSize_ && "p矩阵维度不匹配");
+    
     // 计算卡尔曼增益矩阵
     this->k_ = p_ * h_.transpose() * (h_ * p_ * h_.transpose() + r_).inverse();
+    
+    // 检查卡尔曼增益矩阵维度
+    assert(k_.rows() == StateSize_ && k_.cols() == ObservationSize_ && "卡尔曼增益矩阵维度不匹配");
+    
     // 更新状态
-    this->current_state_ =
-        this->current_state_ + this->k_ * (this->measurement_ - h_ * this->current_state_);
-    // 更新协方差矩阵
-    p_ = (Eigen::MatrixXd::Identity(f_.rows(), f_.cols()) - this->k_ * h_) * p_;
+    this->current_state_ = this->current_state_ + this->k_ * (this->measurement_ - h_ * this->current_state_);
+    
+    // 更新协方差矩阵，使用StateSize_而不是f_.rows()
+    p_ = (Eigen::MatrixXd::Identity(StateSize_, StateSize_) - this->k_ * h_) * p_;
 }
 
 void KF::control(const Eigen::MatrixXd& controlInput, double dt) {
@@ -120,7 +134,7 @@ Eigen::MatrixXd KF::getState() const {
 }
 
 void KF::initandCheck() {
-    assert(f_.rows() == f_.cols() && "状态转移矩阵 f 必须是方阵");
+    // assert(f_.rows() == f_.cols() && "状态转移矩阵 f 必须是方阵");
     assert(q_.rows() == q_.cols() && "过程噪声协方差矩阵 q 必须是方阵");
     assert(r_.rows() == r_.cols() && "观测噪声协方差矩阵 r 必须是方阵");
 

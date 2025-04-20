@@ -139,7 +139,7 @@ private:
     Eigen::MatrixXd k_; // 卡尔曼增益矩阵,大小为StateSize_ * ObservationSize_
 
     // 当前量
-    Eigen::MatrixXd current_state_; // 当前状态矩阵,大小为StateSize_*StateSize_
+    Eigen::MatrixXd current_state_; // 当前状态矩阵,大小为StateSize_*1
     Eigen::Matrix<double, Eigen::Dynamic, 1> controlInput_; // 控制输入矩阵,大小为ControlSize_ * 1
     Eigen::Matrix<double, Eigen::Dynamic, 1> measurement_; // 观测值矩阵,大小为ObservationSize_ * 1
     Eigen::MatrixXd KalmanGain_; // 卡尔曼增益矩阵,大小为StateSize_ * ObservationSize_
