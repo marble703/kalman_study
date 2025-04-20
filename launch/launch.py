@@ -7,6 +7,7 @@ from launch.actions import GroupAction
 from launch_ros.actions import Node
 
 launch_name = "kftest"
+executable_name = 'kftest_node'
 
 def generate_launch_description():
     config = os.path.join(
@@ -18,7 +19,7 @@ def generate_launch_description():
         actions=[
             Node(
                 package=launch_name,
-                executable=launch_name + '_node',
+                executable=executable_name,
                 output='screen',
                 parameters=[config],
                 emulate_tty=True
