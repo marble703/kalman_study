@@ -1,24 +1,33 @@
-#include "KF/include/KF.hpp"
 #include "EKF/include/EKF.hpp"
+#include "KF/include/KF.hpp"
+#include <chrono>
+#include <thread>
 
 #include "std_msgs/msg/float32.hpp" // IWYU pragma: keep
 #include <iostream>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
-enum FilterType {
-    KALMANFLITER = 0,
-    EXTENDKALMANFLITER,
-    UNSCENTEDKALMANFLITER
+class FliterNode: public rclcpp::Node {
+public:
+    FliterNode(): Node("kftest_node") {
+        this->declare_parameter<int>("fliter_type", 0);
+        this->declare_parameter<bool>("debug", false);
+    }
 };
+enum FilterType { KALMANFLITER = 0, EXTENDKALMANFLITER, UNSCENTEDKALMANFLITER };
 
-int main() {
-    rclcpp::init(0, nullptr);
+int main(int argc, char* argv[]) {
+    rclcpp::init(argc, argv);
 
-    auto node = std::make_shared<rclcpp::Node>("kf_test_node");
+    auto node = std::make_shared<FliterNode>();
     auto publisher = node->create_publisher<std_msgs::msg::Float32>("yaw_filter", 10);
 
-    int fliter_type = node->declare_parameter("fliter_type", 0);
+    // 等待一小段时间让参数加载
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    int fliter_type = node->get_parameter("fliter_type").as_int();
+    // bool debug = node->get_parameter("debug").as_bool();
 
     double yaw = 0.0;
 
@@ -46,17 +55,21 @@ int main() {
     r << 100;
     Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
     initState << 0, 0;
-    KF kf(bindMatrix, h, b, q, r);
 
-    if(fliter_type == KALMANFLITER) {
-        KF kf(bindMatrix, h, b, q, r);
-    } else if (fliter_type == EXTENDKALMANFLITER) {
-        EKF kf(bindMatrix, h, b, q, r);
+    std::shared_ptr<FilterBase> kf;
+
+    if (fliter_type == KALMANFLITER) {
+        std::cout << "Using Kalman Filter" << std::endl;
+        kf = std::make_shared<KF>(bindMatrix, h, b, q, r);
+    } else if (fliter_type == EXTENDKALMANFLITER) // 由于这里使用的线性模型，实际上退化为线性卡尔曼滤波器
+    {
+        std::cout << "Using Extended Kalman Filter" << std::endl;
+        kf = std::make_shared<EKF>(bindMatrix, h, b, q, r);
     } else if (fliter_type == UNSCENTEDKALMANFLITER) {
-        // UKF kf(bindMatrix, h, b, q, r);
+        // kf = std::make_shared<UKF>(bindMatrix, h, b, q, r);
     }
 
-    kf.init(initState);
+    kf->init(initState);
 
     auto subscriber = node->create_subscription<std_msgs::msg::Float32>(
         "shoot_info2",
@@ -67,9 +80,9 @@ int main() {
 
             Eigen::Matrix<double, 1, 1> measurement; // 观测值矩阵
             measurement << yaw;
-            kf.update(measurement);
+            kf->update(measurement);
 
-            auto state = kf.getState();
+            auto state = kf->getState();
             std::cout << "Filtered yaw: " << state(0, 0) << "\n" << std::endl;
             std::cout << "state: " << state << "\n" << std::endl;
 
@@ -88,8 +101,8 @@ int main() {
             auto wait_result = waitset.wait(std::chrono::milliseconds(9));
             if (wait_result.kind() == rclcpp::WaitResultKind::Timeout) {
                 for (int i = 0; i < 3; ++i) {
-                    kf.predict();
-                    auto state = kf.getState();
+                    kf->predict();
+                    auto state = kf->getState();
                     std::cout << "Predicted state: " << state(0, 0) << "\n" << std::endl;
                     std::cout << "state: " << state << "\n" << std::endl;
                     std_msgs::msg::Float32 Filteredmsg;
