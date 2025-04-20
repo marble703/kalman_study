@@ -89,16 +89,17 @@ void KF::updateKalmanGain() {
     assert(this->measurement_.rows() == h_.rows() && "测量矩阵维度不匹配");
     assert(h_.rows() > 0 && h_.cols() > 0 && "h矩阵维度不能为0");
     assert(p_.rows() == StateSize_ && p_.cols() == StateSize_ && "p矩阵维度不匹配");
-    
+
     // 计算卡尔曼增益矩阵
     this->k_ = p_ * h_.transpose() * (h_ * p_ * h_.transpose() + r_).inverse();
-    
+
     // 检查卡尔曼增益矩阵维度
     assert(k_.rows() == StateSize_ && k_.cols() == ObservationSize_ && "卡尔曼增益矩阵维度不匹配");
-    
+
     // 更新状态
-    this->current_state_ = this->current_state_ + this->k_ * (this->measurement_ - h_ * this->current_state_);
-    
+    this->current_state_ =
+        this->current_state_ + this->k_ * (this->measurement_ - h_ * this->current_state_);
+
     // 更新协方差矩阵，使用StateSize_而不是f_.rows()
     p_ = (Eigen::MatrixXd::Identity(StateSize_, StateSize_) - this->k_ * h_) * p_;
 }
