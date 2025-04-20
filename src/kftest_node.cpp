@@ -1,16 +1,24 @@
-#include "EKF/include/EKF.hpp"
 #include "KF/include/KF.hpp"
+#include "EKF/include/EKF.hpp"
 
 #include "std_msgs/msg/float32.hpp" // IWYU pragma: keep
 #include <iostream>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
 
+enum FilterType {
+    KALMANFLITER = 0,
+    EXTENDKALMANFLITER,
+    UNSCENTEDKALMANFLITER
+};
+
 int main() {
     rclcpp::init(0, nullptr);
 
     auto node = std::make_shared<rclcpp::Node>("kf_test_node");
     auto publisher = node->create_publisher<std_msgs::msg::Float32>("yaw_filter", 10);
+
+    int fliter_type = node->declare_parameter("fliter_type", 0);
 
     double yaw = 0.0;
 
@@ -39,6 +47,15 @@ int main() {
     Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
     initState << 0, 0;
     KF kf(bindMatrix, h, b, q, r);
+
+    if(fliter_type == KALMANFLITER) {
+        KF kf(bindMatrix, h, b, q, r);
+    } else if (fliter_type == EXTENDKALMANFLITER) {
+        EKF kf(bindMatrix, h, b, q, r);
+    } else if (fliter_type == UNSCENTEDKALMANFLITER) {
+        // UKF kf(bindMatrix, h, b, q, r);
+    }
+
     kf.init(initState);
 
     auto subscriber = node->create_subscription<std_msgs::msg::Float32>(
