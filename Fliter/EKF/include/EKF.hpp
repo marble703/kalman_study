@@ -1,12 +1,8 @@
 #pragma once
 
 #include <eigen3/Eigen/Dense>
-#include <optional>
-#include <iostream>
-#include <functional>
 
 #include "Utils/BindMatrix.hpp"
-
 #include "FilterBase.hpp"
 
 class EKF: public FilterBase {
