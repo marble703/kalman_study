@@ -22,6 +22,7 @@ int main(int argc, char* argv[]) {
 
     auto node = std::make_shared<FliterNode>();
     auto publisher = node->create_publisher<std_msgs::msg::Float32>("yaw_filter", 10);
+    auto diff_publisher = node->create_publisher<std_msgs::msg::Float32>("yaw_diff", 10);
 
     // 等待一小段时间让参数加载
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -50,7 +51,7 @@ int main(int argc, char* argv[]) {
     Eigen::Matrix<double, 2, 1> b; // 控制输入矩阵
     b << 0, 1;
     Eigen::Matrix<double, 2, 2> q; // 过程噪声协方差矩阵
-    q << 0.01, 0, 0, 1;
+    q << 0.01, 0, 0, 10;
     Eigen::Matrix<double, 1, 1> r; // 观测噪声协方差矩阵
     r << 100;
     Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
@@ -74,7 +75,7 @@ int main(int argc, char* argv[]) {
     auto subscriber = node->create_subscription<std_msgs::msg::Float32>(
         "shoot_info2",
         10,
-        [&yaw, &kf, &publisher](const std_msgs::msg::Float32::SharedPtr msg) {
+        [&yaw, &kf, &publisher, &diff_publisher](const std_msgs::msg::Float32::SharedPtr msg) {
             yaw = msg->data;
             std::cout << "Received yaw: " << yaw << std::endl;
 
@@ -88,7 +89,13 @@ int main(int argc, char* argv[]) {
 
             std_msgs::msg::Float32 Filteredmsg;
             Filteredmsg.data = state(0, 0);
+
             publisher->publish(Filteredmsg);
+
+            std_msgs::msg::Float32 diffmsg;
+            diffmsg.data = yaw - state(0, 0);
+
+            diff_publisher->publish(diffmsg);
         }
     );
 
