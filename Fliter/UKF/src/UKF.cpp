@@ -1,8 +1,4 @@
 #include "UKF/include/UKF.hpp"
-#include <cassert> // for assert
-#include <cmath>   // for sqrt
-#include <iostream>
-#include <stdexcept> // for exceptions
 
 UKF::UKF(
     std::function<Eigen::MatrixXd(const Eigen::MatrixXd&)> f,
