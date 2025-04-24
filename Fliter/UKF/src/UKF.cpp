@@ -174,7 +174,7 @@ void UKF::control(const Eigen::MatrixXd& controlInput, double dt) {
         << std::endl;
     this->controlInput_ = controlInput; // 如果 f_func_ 需要控制输入，则存储控制输入
 
-    // 如果提供了 dt，更新内部 dt
+    // 如果提供了 dt，更新 dt
     if (dt > 0.0) {
         this->dt_ = dt;
     }
@@ -423,7 +423,7 @@ void UKF::initandCheck() {
     this->ControlSize_ = 0;                                       // 控制输入不设置
     this->controlInput_ = Eigen::MatrixXd::Zero(0, 1);            // 初始化控制输入
 
-    // 初始化 UKF特定 矩阵
+    // 初始化 UKF特定矩阵
     predictedMeasurementMean_.resize(observationSize_, 1);
     Pyy_.resize(observationSize_, observationSize_);
     Pxy_.resize(stateSize_, observationSize_);
