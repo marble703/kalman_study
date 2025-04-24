@@ -7,8 +7,6 @@
 
 class FilterBase {
 public:
-    virtual ~FilterBase() = default;
-
     // 传入初始状态,初始化滤波器
     virtual void init(const Eigen::MatrixXd& initState) = 0;
 
