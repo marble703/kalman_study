@@ -5,22 +5,23 @@
 #include <stdexcept> // for exceptions
 
 UKF::UKF(
-    std::function<Eigen::MatrixXd(const utils::BindableMatrixXd&)> f,
+    std::function<Eigen::MatrixXd(const Eigen::MatrixXd&)> f,
     std::function<Eigen::MatrixXd(const Eigen::MatrixXd&)> h,
     const Eigen::MatrixXd& q,
     const Eigen::MatrixXd& r,
     int stateSize,
     int observationSize,
+    double dt,
     double alpha,
     double beta,
     double kappa
 ):
+    dt_(dt),
     alpha_(alpha),
     beta_(beta),
     kappa_(kappa),
     f_func_(f),
-    h_func_(h)
-// Note: dt_ is initialized in FilterBase or needs explicit initialization if not inherited
+    h_func_(h) // Initialize dt_
 {
     this->stateSize_ = stateSize;
     this->observationSize_ = observationSize;
@@ -120,7 +121,7 @@ void UKF::init(const Eigen::MatrixXd& initState) {
     );
     this->initState_ = initState;
     this->current_state_ = this->initState_;
-    this->p_ = this->p0_; // Use initial covariance
+    this->p_ = this->p0_;
 }
 
 void UKF::predict(double dt) {
@@ -130,6 +131,13 @@ void UKF::predict(double dt) {
     if (current_dt <= 0.0) {
         throw std::invalid_argument("Time interval dt must be positive for prediction.");
     }
+
+    if (p_.determinant() <= 0) {
+        std::cerr << "Warning: Covariance matrix P is not positive definite. Adding epsilon * I."
+                  << std::endl;
+        p_ += Eigen::MatrixXd::Identity(stateSize_, stateSize_) * 1e-6; // 添加一个小的正定对角矩阵
+    }
+
     this->dt_ = current_dt; // Update stored dt if a new one is provided
 
     // 1. Generate Sigma Points based on current state and covariance

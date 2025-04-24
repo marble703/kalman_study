@@ -1,12 +1,7 @@
 #pragma once
 
-#include <cassert>
-#include <cmath>
 #include <eigen3/Eigen/Dense>
-#include <functional>
 #include <iostream>
-#include <stdexcept>
-#include <vector>
 
 #include "FilterBase.hpp"
 #include "Utils/BindMatrix.hpp"
@@ -25,12 +20,13 @@ public:
      * @param kappa UKF 参数 kappa
      * @param dt 时间间隔 (固定)
      */
-    UKF(std::function<Eigen::MatrixXd(const utils::BindableMatrixXd&)> f,
+    UKF(std::function<Eigen::MatrixXd(const Eigen::MatrixXd&)> f,
         std::function<Eigen::MatrixXd(const Eigen::MatrixXd&)> h,
         const Eigen::MatrixXd& q,
         const Eigen::MatrixXd& r,
         int stateSize,
         int observationSize,
+        double dt = 0.0,
         double alpha = 1e-3,
         double beta = 2.0,
         double kappa = 0.0);
@@ -71,6 +67,7 @@ private:
     int ControlSize_;
 
     double dt_; // 时间间隔
+    std::shared_ptr<double> arg_; // 绑定的参数
 
     // 模型矩阵
     Eigen::MatrixXd q_; // 过程噪声协方差矩阵
