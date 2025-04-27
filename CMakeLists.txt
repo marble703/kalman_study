@@ -43,6 +43,7 @@ target_include_directories(${PROJECT_NAME}_node PUBLIC ${PROJECT_SOURCE_DIR}/Fli
 add_library(kf_lib STATIC
     Fliter/KF/src/KF.cpp
     Fliter/EKF/src/EKF.cpp
+    Fliter/UKF/src/UKF.cpp
     Fliter/Utils/src/BindMatrix.cpp
 )
 

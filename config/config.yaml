@@ -3,4 +3,4 @@
     # 是否开启调试模式
     debug: false
     # 滤波器类型
-    fliter_type: 1
+    fliter_type: 2
