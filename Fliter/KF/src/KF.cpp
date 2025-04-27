@@ -1,5 +1,4 @@
 #include "KF/include/KF.hpp"
-#include <iostream>
 
 KF::KF(
     const Eigen::MatrixXd f,

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <eigen3/Eigen/Dense>
-#include <optional>
 
 #include "Utils/BindMatrix.hpp"
 
