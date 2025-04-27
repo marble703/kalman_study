@@ -1,5 +1,4 @@
 #include "EKF/include/EKF.hpp"
-#include <iostream>
 
 EKF::EKF(
     const Eigen::MatrixXd f,

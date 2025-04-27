@@ -66,7 +66,7 @@ private:
     int observationSize_;
     int ControlSize_;
 
-    double dt_; // 时间间隔
+    double dt_;                   // 时间间隔
     std::shared_ptr<double> arg_; // 绑定的参数
 
     // 模型矩阵

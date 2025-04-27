@@ -1,13 +1,7 @@
 #pragma once
 
 #include <eigen3/Eigen/Dense>
-#include <functional>
-#include <initializer_list>
 #include <memory>
-#include <tuple>
-#include <type_traits>
-#include <utility>
-#include <vector>
 
 namespace utils {
 

@@ -52,9 +52,9 @@ int main(int argc, char* argv[]) {
     Eigen::Matrix<double, 2, 1> b; // 控制输入矩阵
     b << 0, 1;
     Eigen::Matrix<double, 2, 2> q; // 过程噪声协方差矩阵
-    q << 0.1, 0, 0, 0.01;
+    q << 0.001, 0, 0, 0.001;
     Eigen::Matrix<double, 1, 1> r; // 观测噪声协方差矩阵
-    r << 100;
+    r << 1000;
     Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
     initState << 0, 0;
 
