@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
 
     std::shared_ptr<FilterBase> kf;
 
+    // 具体滤波器的初始化
     if (fliter_type == KALMANFLITER) {
         std::cout << "Using Kalman Filter" << std::endl;
 
@@ -68,6 +69,7 @@ int main(int argc, char* argv[]) {
     } else if (fliter_type == EXTENDKALMANFLITER) {
         std::cout << "Using Extended Kalman Filter" << std::endl;
 
+        // clang-format off
         Eigen::Matrix<double, 1, 3> h; // 观测矩阵
         h << 1, 0, 0;
         Eigen::Matrix<double, 3, 1> b; // 控制输入矩阵
@@ -82,14 +84,14 @@ int main(int argc, char* argv[]) {
         initState << 0, 0, 0;
 
         // 定义非线性状态转移函数
-        auto stateFn = [dt](const Eigen::MatrixXd& x, double delta_t) -> Eigen::MatrixXd {
-            double dt_val = delta_t > 0 ? delta_t : *dt;
+        auto stateFn = [](const Eigen::MatrixXd& x, std::shared_ptr<double> dt) -> Eigen::MatrixXd {
             Eigen::MatrixXd result(3, 1);
-            result(0, 0) = x(0, 0) + x(1, 0) * dt_val + 0.5 * x(0, 0) * dt_val * dt_val;
-            result(1, 0) = x(1, 0) + x(0, 0) * dt_val;
+            result(0, 0) = x(0, 0) + x(1, 0) * *dt + 0.5 * x(2, 0) * (*dt) * (*dt);
+            result(1, 0) = x(1, 0) + x(2, 0) * *dt;
             result(2, 0) = x(2, 0);
             return result;
         };
+        // clang-format on
 
         // 定义非线性观测函数
         auto measureFn = [](const Eigen::MatrixXd& x) -> Eigen::MatrixXd {
@@ -100,7 +102,7 @@ int main(int argc, char* argv[]) {
         };
 
         // 使用非线性EKF构造函数
-        kf = std::make_shared<EKF>(stateFn, measureFn, 3, 1, b, q, r, 0.003);
+        kf = std::make_shared<EKF>(stateFn, measureFn, 3, 1, b, q, r, dt);
         kf->init(initState);
 
     } else if (fliter_type == UNSCENTEDKALMANFLITER) {
@@ -139,6 +141,7 @@ int main(int argc, char* argv[]) {
     }
 
     // TODO: 等 UKF 修完了改成动态时间
+    // 数据接收和处理
     auto subscriber = node->create_subscription<std_msgs::msg::Float32>(
         "shoot_info2",
         10,
@@ -167,10 +170,10 @@ int main(int argc, char* argv[]) {
         }
     );
 
+    // 若一段时间无数据，启动预测
     rclcpp::WaitSet waitset;
     waitset.add_subscription(subscriber);
 
-    // 启动定时预测线程
     std::thread waitSetThread([&waitset, &kf, &publisher]() {
         while (rclcpp::ok()) {
             auto wait_result = waitset.wait(std::chrono::milliseconds(9));
