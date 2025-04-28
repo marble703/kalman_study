@@ -33,19 +33,19 @@ int main(int argc, char* argv[]) {
 
     double yaw = 0.0;
 
-    std::shared_ptr<double> arg = std::make_shared<double>(0.003);
+    std::shared_ptr<double> dt = std::make_shared<double>(0.003);
 
     // clang-format off
     auto bindMatrix = utils::BindableMatrixXd::create(
             2,
             2,
             false,
-            1.0, [arg]() { return *arg; },
+            1.0, [dt]() { return *dt; },
             0.0, 1.0
         );
     // clang-format on
 
-    bindMatrix.setArg(arg);
+    bindMatrix.setArg(dt);
 
     Eigen::Matrix<double, 1, 2> h; // 观测矩阵
     h << 1, 0;
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
             // 状态转移方程
             Eigen::MatrixXd result(2, 1);
             result(0, 0) = x(0, 0) + x(1, 0); // 位置 = 上次位置 + 速度
-            result(1, 0) = x(1, 0);          // 速度不变
+            result(1, 0) = x(1, 0);           // 速度不变
             return result;
         };
 
@@ -92,6 +92,7 @@ int main(int argc, char* argv[]) {
 
     kf->init(initState);
 
+    // TODO: 等 UKF 修完了改成动态时间
     auto subscriber = node->create_subscription<std_msgs::msg::Float32>(
         "shoot_info2",
         10,

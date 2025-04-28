@@ -54,10 +54,30 @@ public:
     Eigen::MatrixXd getState() const override;
 
 private:
+    /**
+     * @brief 生成 Sigma 点
+     * 
+     */
     void generateSigmaPoints();
+
+    /**
+     * @brief 预测 Sigma 点
+     * 
+     */
     void predictSigmaPoints();
+
+    /**
+     * @brief 预测均值和协方差
+     * 
+     */
     void predictMeanAndCovariance();
+
+    /**
+     * @brief 预测观测值
+     * 
+     */
     void predictObservation();
+
     void updateState(const Eigen::MatrixXd& measurement);
     void initandCheck();
 

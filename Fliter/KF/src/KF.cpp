@@ -51,9 +51,9 @@ void KF::update(const Eigen::MatrixXd& measurement, double dt, bool setDefault) 
     assert(measurement.cols() == 1 && "测量矩阵必须是列向量");
 
     this->measurement_ = measurement;
-    this->dt_ = dt == 0.0 ? dt_ : dt;
 
     if (setDefault) {
+        this->dt_ = dt == 0.0 ? dt_ : dt;
         this->current_state_ = f_ * this->current_state_;
 
         // 预测协方差矩阵
@@ -134,7 +134,7 @@ Eigen::MatrixXd KF::getState() const {
 }
 
 void KF::initandCheck() {
-    // assert(f_.rows() == f_.cols() && "状态转移矩阵 f 必须是方阵");
+    assert(f_.rows() == f_.cols() && "状态转移矩阵 f 必须是方阵");
     assert(q_.rows() == q_.cols() && "过程噪声协方差矩阵 q 必须是方阵");
     assert(r_.rows() == r_.cols() && "观测噪声协方差矩阵 r 必须是方阵");
 

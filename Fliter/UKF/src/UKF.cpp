@@ -111,14 +111,12 @@ void UKF::init(const Eigen::MatrixXd& initState) {
 void UKF::predict(double dt) {
     assert((dt > 0 || this->dt_ > 0) && "时间间隔 dt 必须大于 0");
 
-    double current_dt = (dt > 0.0) ? dt : this->dt_;
+    this->dt_ = (dt > 0.0) ? dt : this->dt_;
 
     if (p_.determinant() <= 0) {
         std::cerr << "Warning: 协方差矩阵 P 非正定，添加小的正定对角矩阵以修正。" << std::endl;
         p_ += Eigen::MatrixXd::Identity(stateSize_, stateSize_) * 1e-6; // 添加一个小的正定对角矩阵
     }
-
-    this->dt_ = current_dt; // 更新 dt_
 
     // 1. 生成 Sigma 点
     generateSigmaPoints();
@@ -197,11 +195,9 @@ void UKF::resetState(const Eigen::MatrixXd& currentState) {
             throw std::invalid_argument("提供的状态矩阵维度与 resetState 不匹配。");
         }
         this->current_state_ = currentState;
-        // 可选地也重置协方差，这是常见做法
         this->p_ = this->p0_;
     }
-    // 重置其他 UKF 内部状态（如 sigma 点）并非严格必要
-    // 因为它们将在下一次预测步骤中重新计算。
+
 }
 
 Eigen::MatrixXd UKF::getState() const {
@@ -213,7 +209,7 @@ Eigen::MatrixXd UKF::getState() const {
 void UKF::generateSigmaPoints() {
     lambda_ = alpha_ * alpha_ * (static_cast<double>(stateSize_) + kappa_)
         - static_cast<double>(stateSize_);
-    double gamma = std::sqrt(static_cast<double>(stateSize_) + lambda_); // 确保类型转换为 double
+    double gamma = std::sqrt(static_cast<double>(stateSize_) + lambda_);
 
     sigmaPoints_.col(0) = current_state_; // 第一个 sigma 点是当前均值
 
