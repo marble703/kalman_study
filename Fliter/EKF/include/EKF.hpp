@@ -6,8 +6,8 @@
 class EKF: public FilterBase {
 public:
     // 定义非线性函数类型 - 状态转移函数和观测函数
-    using StateTransitionFunction = std::function<Eigen::VectorXd(const Eigen::VectorXd&, double)>;
-    using MeasurementFunction = std::function<Eigen::VectorXd(const Eigen::VectorXd&)>;
+    using StateTransitionFunction = std::function<Eigen::MatrixXd(const Eigen::MatrixXd&, double)>;
+    using MeasurementFunction = std::function<Eigen::MatrixXd(const Eigen::MatrixXd&)>;
 
     /**
      * @brief 完整构造
