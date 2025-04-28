@@ -46,28 +46,76 @@ int main(int argc, char* argv[]) {
 
     bindMatrix.setArg(dt);
 
-    Eigen::Matrix<double, 1, 2> h; // 观测矩阵
-    h << 1, 0;
-    Eigen::Matrix<double, 2, 1> b; // 控制输入矩阵
-    b << 0, 1;
-    Eigen::Matrix<double, 2, 2> q; // 过程噪声协方差矩阵
-    q << 0.001, 0, 0, 0.001;
-    Eigen::Matrix<double, 1, 1> r; // 观测噪声协方差矩阵
-    r << 1000;
-    Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
-    initState << 0, 0;
-
     std::shared_ptr<FilterBase> kf;
 
     if (fliter_type == KALMANFLITER) {
         std::cout << "Using Kalman Filter" << std::endl;
+
+        Eigen::Matrix<double, 1, 2> h; // 观测矩阵
+        h << 1, 0;
+        Eigen::Matrix<double, 2, 1> b; // 控制输入矩阵
+        b << 0, 1;
+        Eigen::Matrix<double, 2, 2> q; // 过程噪声协方差矩阵
+        q << 0.1, 0, 0, 0.01;
+        Eigen::Matrix<double, 1, 1> r; // 观测噪声协方差矩阵
+        r << 10;
+        Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
+        initState << 0, 0;
+
         kf = std::make_shared<KF>(bindMatrix, h, b, q, r);
-    } else if (fliter_type == EXTENDKALMANFLITER) // 由于这里使用的线性模型，实际上退化为线性卡尔曼滤波器
-    {
+        kf->init(initState);
+
+    } else if (fliter_type == EXTENDKALMANFLITER) {
         std::cout << "Using Extended Kalman Filter" << std::endl;
-        kf = std::make_shared<EKF>(bindMatrix, h, b, q, r);
+
+        Eigen::Matrix<double, 1, 3> h; // 观测矩阵
+        h << 1, 0, 0;
+        Eigen::Matrix<double, 3, 1> b; // 控制输入矩阵
+        b << 0, 0, 1;
+        Eigen::Matrix<double, 3, 3> q; // 过程噪声协方差矩阵
+        q << 0.1, 0, 0, 
+             0, 0.01, 0, 
+             0, 0, 0.001;
+        Eigen::Matrix<double, 1, 1> r; // 观测噪声协方差矩阵
+        r << 10;
+        Eigen::Matrix<double, 3, 1> initState; // 初始状态矩阵
+        initState << 0, 0, 0;
+
+        // 定义非线性状态转移函数
+        auto stateFn = [dt](const Eigen::MatrixXd& x, double delta_t) -> Eigen::MatrixXd {
+            double dt_val = delta_t > 0 ? delta_t : *dt;
+            Eigen::MatrixXd result(3, 1);
+            result(0, 0) = x(0, 0) + x(1, 0) * dt_val + 0.5 * x(0, 0) * dt_val * dt_val;
+            result(1, 0) = x(1, 0) + x(0, 0) * dt_val;
+            result(2, 0) = x(2, 0);
+            return result;
+        };
+
+        // 定义非线性观测函数
+        auto measureFn = [](const Eigen::MatrixXd& x) -> Eigen::MatrixXd {
+            // 非线性观测方程
+            Eigen::MatrixXd result(1, 1);
+            result(0, 0) = x(0, 0);
+            return result;
+        };
+
+        // 使用非线性EKF构造函数
+        kf = std::make_shared<EKF>(stateFn, measureFn, 3, 1, b, q, r, 0.003);
+        kf->init(initState);
+
     } else if (fliter_type == UNSCENTEDKALMANFLITER) {
         std::cout << "Using Unscented Kalman Filter" << std::endl;
+
+        Eigen::Matrix<double, 1, 2> h; // 观测矩阵
+        h << 1, 0;
+        Eigen::Matrix<double, 2, 1> b; // 控制输入矩阵
+        b << 0, 1;
+        Eigen::Matrix<double, 2, 2> q; // 过程噪声协方差矩阵
+        q << 0.001, 0, 0, 0.001;
+        Eigen::Matrix<double, 1, 1> r; // 观测噪声协方差矩阵
+        r << 1000;
+        Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
+        initState << 0, 0;
 
         // 定义状态转移函数和观测函数
         auto f = [](const Eigen::MatrixXd& x) -> Eigen::MatrixXd {
@@ -87,9 +135,8 @@ int main(int argc, char* argv[]) {
         };
 
         kf = std::make_shared<UKF>(f, h_ukf, q, r, 2, 1, 0.003);
+        kf->init(initState);
     }
-
-    kf->init(initState);
 
     // TODO: 等 UKF 修完了改成动态时间
     auto subscriber = node->create_subscription<std_msgs::msg::Float32>(
