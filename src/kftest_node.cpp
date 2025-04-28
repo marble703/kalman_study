@@ -1,6 +1,5 @@
-#include "EKF/include/EKF.hpp"
-#include "KF/include/KF.hpp"
-#include "UKF/include/UKF.hpp"
+#include "Fliter.hpp"
+
 #include <chrono>
 #include <thread>
 
@@ -33,49 +32,99 @@ int main(int argc, char* argv[]) {
 
     double yaw = 0.0;
 
-    std::shared_ptr<double> arg = std::make_shared<double>(0.003);
+    std::shared_ptr<double> dt = std::make_shared<double>(0.003);
 
     // clang-format off
     auto bindMatrix = utils::BindableMatrixXd::create(
             2,
             2,
             false,
-            1.0, [arg]() { return *arg; },
+            1.0, [dt]() { return *dt; },
             0.0, 1.0
         );
     // clang-format on
 
-    bindMatrix.setArg(arg);
-
-    Eigen::Matrix<double, 1, 2> h; // 观测矩阵
-    h << 1, 0;
-    Eigen::Matrix<double, 2, 1> b; // 控制输入矩阵
-    b << 0, 1;
-    Eigen::Matrix<double, 2, 2> q; // 过程噪声协方差矩阵
-    q << 0.001, 0, 0, 0.001;
-    Eigen::Matrix<double, 1, 1> r; // 观测噪声协方差矩阵
-    r << 1000;
-    Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
-    initState << 0, 0;
+    bindMatrix.setArg(dt);
 
     std::shared_ptr<FilterBase> kf;
 
+    // 具体滤波器的初始化
     if (fliter_type == KALMANFLITER) {
         std::cout << "Using Kalman Filter" << std::endl;
+
+        Eigen::Matrix<double, 1, 2> h; // 观测矩阵
+        h << 1, 0;
+        Eigen::Matrix<double, 2, 1> b; // 控制输入矩阵
+        b << 0, 1;
+        Eigen::Matrix<double, 2, 2> q; // 过程噪声协方差矩阵
+        q << 0.1, 0, 0, 0.01;
+        Eigen::Matrix<double, 1, 1> r; // 观测噪声协方差矩阵
+        r << 10;
+        Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
+        initState << 0, 0;
+
         kf = std::make_shared<KF>(bindMatrix, h, b, q, r);
-    } else if (fliter_type == EXTENDKALMANFLITER) // 由于这里使用的线性模型，实际上退化为线性卡尔曼滤波器
-    {
+        kf->init(initState);
+
+    } else if (fliter_type == EXTENDKALMANFLITER) {
         std::cout << "Using Extended Kalman Filter" << std::endl;
-        kf = std::make_shared<EKF>(bindMatrix, h, b, q, r);
+
+        // clang-format off
+        Eigen::Matrix<double, 1, 3> h; // 观测矩阵
+        h << 1, 0, 0;
+        Eigen::Matrix<double, 3, 1> b; // 控制输入矩阵
+        b << 0, 0, 1;
+        Eigen::Matrix<double, 3, 3> q; // 过程噪声协方差矩阵
+        q << 0.1, 0, 0, 
+             0, 0.01, 0, 
+             0, 0, 0.001;
+        Eigen::Matrix<double, 1, 1> r; // 观测噪声协方差矩阵
+        r << 10;
+        Eigen::Matrix<double, 3, 1> initState; // 初始状态矩阵
+        initState << 0, 0, 0;
+
+        // 定义非线性状态转移函数
+        auto stateFn = [](const Eigen::MatrixXd& x, std::shared_ptr<double> dt) -> Eigen::MatrixXd {
+            Eigen::MatrixXd result(3, 1);
+            result(0, 0) = x(0, 0) + x(1, 0) * *dt + 0.5 * x(2, 0) * (*dt) * (*dt);
+            result(1, 0) = x(1, 0) + x(2, 0) * *dt;
+            result(2, 0) = x(2, 0);
+            return result;
+        };
+        // clang-format on
+
+        // 定义非线性观测函数
+        auto measureFn = [](const Eigen::MatrixXd& x) -> Eigen::MatrixXd {
+            // 非线性观测方程
+            Eigen::MatrixXd result(1, 1);
+            result(0, 0) = x(0, 0);
+            return result;
+        };
+
+        // 使用非线性EKF构造函数
+        kf = std::make_shared<EKF>(stateFn, measureFn, 3, 1, b, q, r, dt);
+        kf->init(initState);
+
     } else if (fliter_type == UNSCENTEDKALMANFLITER) {
         std::cout << "Using Unscented Kalman Filter" << std::endl;
+
+        Eigen::Matrix<double, 1, 2> h; // 观测矩阵
+        h << 1, 0;
+        Eigen::Matrix<double, 2, 1> b; // 控制输入矩阵
+        b << 0, 1;
+        Eigen::Matrix<double, 2, 2> q; // 过程噪声协方差矩阵
+        q << 0.001, 0, 0, 0.001;
+        Eigen::Matrix<double, 1, 1> r; // 观测噪声协方差矩阵
+        r << 1000;
+        Eigen::Matrix<double, 2, 1> initState; // 初始状态矩阵
+        initState << 0, 0;
 
         // 定义状态转移函数和观测函数
         auto f = [](const Eigen::MatrixXd& x) -> Eigen::MatrixXd {
             // 状态转移方程
             Eigen::MatrixXd result(2, 1);
             result(0, 0) = x(0, 0) + x(1, 0); // 位置 = 上次位置 + 速度
-            result(1, 0) = x(1, 0);          // 速度不变
+            result(1, 0) = x(1, 0);           // 速度不变
             return result;
         };
 
@@ -88,10 +137,11 @@ int main(int argc, char* argv[]) {
         };
 
         kf = std::make_shared<UKF>(f, h_ukf, q, r, 2, 1, 0.003);
+        kf->init(initState);
     }
 
-    kf->init(initState);
-
+    // TODO: 等 UKF 修完了改成动态时间
+    // 数据接收和处理
     auto subscriber = node->create_subscription<std_msgs::msg::Float32>(
         "shoot_info2",
         10,
@@ -120,10 +170,10 @@ int main(int argc, char* argv[]) {
         }
     );
 
+    // 若一段时间无数据，启动预测
     rclcpp::WaitSet waitset;
     waitset.add_subscription(subscriber);
 
-    // 启动定时预测线程
     std::thread waitSetThread([&waitset, &kf, &publisher]() {
         while (rclcpp::ok()) {
             auto wait_result = waitset.wait(std::chrono::milliseconds(9));

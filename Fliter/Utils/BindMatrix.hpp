@@ -24,8 +24,7 @@ public:
      * @return BindableMatrixXd 
      */
     template<typename... Args>
-    static BindableMatrixXd
-    create(int rows, int cols, bool autoUpdate = false, Args&&... args) {
+    static BindableMatrixXd create(int rows, int cols, bool autoUpdate = false, Args&&... args) {
         BindableMatrixXd result;
 
         result.autoUpdate_ = autoUpdate;
@@ -134,11 +133,21 @@ private:
             int i = idx / cols;
             int j = idx % cols;
 
-            if constexpr (std::is_invocable_v<std::decay_t<decltype(value)>>) {
-                // 如果是可调用对象
-                auto func = [v = value](std::shared_ptr<double>) -> double {
-                    return v();
-                };
+            if constexpr (std::is_invocable_v<
+                              std::decay_t<decltype(value)>,
+                              std::shared_ptr<double>>) {
+                // 如果是接受 std::shared_ptr<double> 参数的可调用对象
+                auto func = [v = value](std::shared_ptr<double> arg) -> double { return v(arg); };
+                matrix.bindings_.emplace_back(i, j, func);
+                try {
+                    // 尝试获取初始值，如果 arg_ 已设置则传入
+                    matrix.matrix_(i, j) = matrix.arg_ ? value(matrix.arg_) : 0.0;
+                } catch (...) {
+                    matrix.matrix_(i, j) = 0.0;
+                }
+            } else if constexpr (std::is_invocable_v<std::decay_t<decltype(value)>>) {
+                // 如果是不接受参数的可调用对象
+                auto func = [v = value](std::shared_ptr<double>) -> double { return v(); };
                 matrix.bindings_.emplace_back(i, j, func);
                 try {
                     // 尝试获取初始值
@@ -157,7 +166,7 @@ private:
     }
 
     std::shared_ptr<double> arg_;    // 参数
-    mutable double argValueCache_;           // 参数值缓存
+    mutable double argValueCache_;   // 参数值缓存
     mutable Eigen::MatrixXd matrix_; // 矩阵
     std::vector<std::tuple<int, int, std::function<double(std::shared_ptr<double>)>>>
         bindings_; // 绑定的函数

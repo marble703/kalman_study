@@ -1,10 +1,7 @@
 #pragma once
 
-#include <eigen3/Eigen/Dense>
-
+#include "FliterBase/FilterBase.hpp"
 #include "Utils/BindMatrix.hpp"
-
-#include "FilterBase.hpp"
 
 class KF: public FilterBase {
 public:

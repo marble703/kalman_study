@@ -45,13 +45,7 @@ add_library(kf_lib STATIC
     Fliter/EKF/src/EKF.cpp
     Fliter/UKF/src/UKF.cpp
     Fliter/Utils/src/BindMatrix.cpp
-)
-
-add_library(utils
-    Fliter/Utils/src/BindMatrix.cpp)
-
-set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Fliter/utils
+    Fliter/FliterBase/FilterBase.hpp
 )
 
 target_include_directories(kf_lib PUBLIC
@@ -65,6 +59,7 @@ target_link_libraries(${PROJECT_NAME}_node
     kf_lib
     ${cpp_typesupport_target}
     ${OpenCV_LIBS}
+
 )
 
 install(DIRECTORY

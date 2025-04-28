@@ -1,16 +1,10 @@
 #pragma once
 
-#include <eigen3/Eigen/Dense>
-
+#include "FliterBase/FilterBase.hpp"
 #include "Utils/BindMatrix.hpp"
-#include "FilterBase.hpp"
 
 class EKF: public FilterBase {
 public:
-    // 定义非线性函数类型 - 状态转移函数和观测函数
-    using StateTransitionFunction = std::function<Eigen::VectorXd(const Eigen::VectorXd&, double)>;
-    using MeasurementFunction = std::function<Eigen::VectorXd(const Eigen::VectorXd&)>;
-
     /**
      * @brief 完整构造
      * 
@@ -22,11 +16,11 @@ public:
      * @param dt // 时间间隔(固定)
      */
     EKF(const Eigen::MatrixXd f,
-       const Eigen::MatrixXd h,
-       const Eigen::MatrixXd b,
-       const Eigen::MatrixXd q,
-       const Eigen::MatrixXd r,
-       double dt = 0.0);
+        const Eigen::MatrixXd h,
+        const Eigen::MatrixXd b,
+        const Eigen::MatrixXd q,
+        const Eigen::MatrixXd r,
+        std::shared_ptr<double> dt = std::make_shared<double>(0.0));
 
     /**
      * @brief 非线性EKF构造
@@ -40,14 +34,14 @@ public:
      * @param r                  // 观测噪声协方差矩阵(固定)
      * @param dt                 // 时间间隔(固定)
      */
-    EKF(const StateTransitionFunction& stateTransitionFn,
-       const MeasurementFunction& measurementFn,
-       int stateSize,
-       int observationSize,
-       const Eigen::MatrixXd& b,
-       const Eigen::MatrixXd& q,
-       const Eigen::MatrixXd& r,
-       double dt = 0.0);
+    EKF(const std::function<Eigen::MatrixXd(const Eigen::MatrixXd&, std::shared_ptr<double>)>& stateTransitionFn,
+        const std::function<Eigen::MatrixXd(const Eigen::MatrixXd&)>& measurementFn,
+        int stateSize,
+        int observationSize,
+        const Eigen::MatrixXd& b,
+        const Eigen::MatrixXd& q,
+        const Eigen::MatrixXd& r,
+        std::shared_ptr<double> dt = std::make_shared<double>(0.0));
 
     /**
      * @brief 动态 dt 构造
@@ -57,13 +51,12 @@ public:
      * @param b  // 控制输入矩阵(固定)
      * @param q  // 过程噪声协方差矩阵(固定)
      * @param r  // 观测噪声协方差矩阵(固定)
-     * @param dt // 时间间隔(可变)
      */
     EKF(utils::BindableMatrixXd f,
-       const Eigen::MatrixXd h,
-       const Eigen::MatrixXd b,
-       const Eigen::MatrixXd q,
-       const Eigen::MatrixXd r);
+        const Eigen::MatrixXd h,
+        const Eigen::MatrixXd b,
+        const Eigen::MatrixXd q,
+        const Eigen::MatrixXd r);
 
     /**
     * @brief 仅模型构造,仅初始化模型
@@ -72,7 +65,7 @@ public:
     * @param h // 观测矩阵(固定)
     * @param b // 控制输入矩阵(固定)
     */
-    EKF(const Eigen::MatrixXd f, const Eigen::MatrixXd h, const Eigen::MatrixXd b, double dt = 0.0);
+    EKF(const Eigen::MatrixXd f, const Eigen::MatrixXd h, const Eigen::MatrixXd b, std::shared_ptr<double> dt = std::make_shared<double>(0.0));
 
     /**
      * @brief 拷贝构造函数,只拷贝模型
@@ -144,7 +137,7 @@ private:
      * @param state 当前状态
      * @return 状态转移雅可比矩阵
      */
-    Eigen::MatrixXd computeStateJacobian(const Eigen::VectorXd& state);
+    Eigen::MatrixXd computeStateJacobian(Eigen::MatrixXd& state);
 
     /**
      * @brief 计算观测函数的雅可比矩阵
@@ -158,14 +151,14 @@ private:
      * @param state 当前状态
      * @return 预测状态
      */
-    Eigen::VectorXd predictNonlinearState(const Eigen::VectorXd& state);
+    Eigen::MatrixXd predictNonlinearState(const Eigen::MatrixXd& state);
 
     /**
      * @brief 使用非线性观测函数计算预测观测
      * @param state 当前状态
      * @return 预测观测
      */
-    Eigen::VectorXd predictNonlinearMeasurement(const Eigen::VectorXd& state);
+    Eigen::MatrixXd predictNonlinearMeasurement(const Eigen::MatrixXd& state);
 
     // 矩阵维度
     int ObservationSize_; // 观测维度
@@ -174,8 +167,8 @@ private:
 
     // 模型矩阵(固定)
     utils::BindableMatrixXd f_; // 状态转移矩阵,大小为StateSize_ * StateSize_
-    const Eigen::MatrixXd h_;         // 观测矩阵,大小为ObservationSize_ * StateSize_
-    const Eigen::MatrixXd b_;         // 控制输入矩阵,大小为StateSize_ * ControlSize_
+    const Eigen::MatrixXd h_;   // 观测矩阵,大小为ObservationSize_ * StateSize_
+    const Eigen::MatrixXd b_;   // 控制输入矩阵,大小为StateSize_ * ControlSize_
 
     // 初始量
     Eigen::Matrix<double, Eigen::Dynamic, 1> initState_; // 初始状态矩阵,大小为StateSize_ * 1
@@ -198,13 +191,14 @@ private:
     // 预测量
     Eigen::MatrixXd predictedState_; // 预测状态矩阵
 
-    double dt_; // 时间间隔
+    std::shared_ptr<double> dt_; // 时间间隔
 
     // 非线性函数
-    StateTransitionFunction stateTransitionFn_; // 非线性状态转移函数
-    MeasurementFunction measurementFn_;         // 非线性观测函数
-    bool useNonlinearFunctions_ = false;        // 是否使用非线性函数
-    
+    std::function<Eigen::MatrixXd(const Eigen::MatrixXd&, std::shared_ptr<double>)>
+        stateTransitionFn_; // 非线性状态转移函数
+    std::function<Eigen::MatrixXd(const Eigen::MatrixXd&)> measurementFn_; // 非线性观测函数
+    bool useNonlinearFunctions_ = false; // 是否使用非线性函数
+
     // 当前雅可比矩阵
     Eigen::MatrixXd F_jacobian_; // 状态转移雅可比矩阵
     Eigen::MatrixXd H_jacobian_; // 观测雅可比矩阵

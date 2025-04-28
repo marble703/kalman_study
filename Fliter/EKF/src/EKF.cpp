@@ -6,7 +6,7 @@ EKF::EKF(
     const Eigen::MatrixXd b,
     const Eigen::MatrixXd q,
     const Eigen::MatrixXd r,
-    double dt
+    std::shared_ptr<double> dt
 ):
     f_(f),
     h_(h),
@@ -29,11 +29,11 @@ EKF::EKF(
     b_(b),
     q_(q),
     r_(r),
-    dt_(*f.getArg()) {
+    dt_(f.getArg()) {
     initandCheck();
 }
 
-EKF::EKF(const Eigen::MatrixXd f, const Eigen::MatrixXd h, const Eigen::MatrixXd b, double dt):
+EKF::EKF(const Eigen::MatrixXd f, const Eigen::MatrixXd h, const Eigen::MatrixXd b, std::shared_ptr<double> dt):
     EKF(f,
         h,
         b,
@@ -43,14 +43,15 @@ EKF::EKF(const Eigen::MatrixXd f, const Eigen::MatrixXd h, const Eigen::MatrixXd
 
 // 非线性EKF构造函数实现
 EKF::EKF(
-    const StateTransitionFunction& stateTransitionFn,
-    const MeasurementFunction& measurementFn,
+    const std::function<Eigen::MatrixXd(const Eigen::MatrixXd&, std::shared_ptr<double>)>&
+        stateTransitionFn,
+    const std::function<Eigen::MatrixXd(const Eigen::MatrixXd&)>& measurementFn,
     int stateSize,
     int observationSize,
     const Eigen::MatrixXd& b,
     const Eigen::MatrixXd& q,
     const Eigen::MatrixXd& r,
-    double dt
+    std::shared_ptr<double> dt
 ):
     // 初始化为恒等矩阵，后续会被雅可比矩阵替换
     f_(Eigen::MatrixXd::Identity(stateSize, stateSize)),
@@ -84,7 +85,7 @@ void EKF::update(const Eigen::MatrixXd& measurement, double dt, bool setDefault)
     assert(measurement.cols() == 1 && "测量矩阵必须是列向量");
 
     this->measurement_ = measurement;
-    this->dt_ = dt == 0.0 ? dt_ : dt;
+    *this->dt_ = dt == 0.0 ? *dt_ : dt;
 
     if (setDefault) {
         this->current_state_ = f_ * this->current_state_;
@@ -106,7 +107,7 @@ void EKF::update(const Eigen::MatrixXd& measurement, double dt, bool setDefault)
 
 void EKF::predict(double dt) {
     assert((dt > 0 || this->dt_ > 0) && "时间间隔 dt 必须大于 0");
-    this->dt_ = dt == 0.0 ? dt_ : dt;
+    *this->dt_ = dt == 0.0 ? *dt_ : dt;
 
     if (useNonlinearFunctions_) {
         // 使用非线性方法计算预测状态
@@ -181,8 +182,8 @@ void EKF::control(const Eigen::MatrixXd& controlInput, double dt) {
     assert(controlInput.rows() == b_.cols() && "控制输入矩阵维度不匹配");
     assert(controlInput.cols() == 1 && "控制输入矩阵必须是列向量");
 
-    this->dt_ = dt == 0.0 ? dt_ : dt_;
-    this->f_.update(dt_);
+    *this->dt_ = dt == 0.0 ? *dt_ : dt;
+    this->f_.update(*this->dt_);
 
     this->controlInput_ = controlInput;
     this->current_state_ = f_ * this->current_state_ + b_ * this->controlInput_;
@@ -208,7 +209,7 @@ Eigen::MatrixXd EKF::getState() const {
 }
 
 void EKF::initandCheck() {
-    // assert(f_.rows() == f_.cols() && "状态转移矩阵 f 必须是方阵");
+    assert(f_.rows() == f_.cols() && "状态转移矩阵 f 必须是方阵");
     assert(q_.rows() == q_.cols() && "过程噪声协方差矩阵 q 必须是方阵");
     assert(r_.rows() == r_.cols() && "观测噪声协方差矩阵 r 必须是方阵");
 
@@ -266,7 +267,10 @@ void EKF::initandCheck() {
     ); // 预测状态矩阵
 }
 
-Eigen::MatrixXd EKF::computeStateJacobian(const Eigen::VectorXd& state) {
+Eigen::MatrixXd EKF::computeStateJacobian(Eigen::MatrixXd& state) {
+    if (state.size() == 0) {
+        throw std::invalid_argument("状态矩阵不能为空");
+    }
     if (!useNonlinearFunctions_) {
         // 如果不使用非线性函数，直接返回线性状态转移矩阵
         return f_.getMatrix();
@@ -279,7 +283,7 @@ Eigen::MatrixXd EKF::computeStateJacobian(const Eigen::VectorXd& state) {
     // 对状态的每个维度进行扰动来计算偏导数
     for (int i = 0; i < StateSize_; ++i) {
         // 创建扰动状态
-        Eigen::VectorXd state_plus = state;
+        Eigen::MatrixXd state_plus = state;
         state_plus(i) += h;
 
         // 计算状态转移结果的差异
@@ -319,15 +323,15 @@ Eigen::MatrixXd EKF::computeMeasurementJacobian(const Eigen::VectorXd& state) {
     return jacobian;
 }
 
-Eigen::VectorXd EKF::predictNonlinearState(const Eigen::VectorXd& state) {
+Eigen::MatrixXd EKF::predictNonlinearState(const Eigen::MatrixXd& state) {
     if (!useNonlinearFunctions_) {
         return f_ * state; // 如果不使用非线性函数，使用线性状态转移
     }
 
-    return stateTransitionFn_(state, dt_);
+    return stateTransitionFn_(state, dt_); // 使用非线性状态转移函数
 }
 
-Eigen::VectorXd EKF::predictNonlinearMeasurement(const Eigen::VectorXd& state) {
+Eigen::MatrixXd EKF::predictNonlinearMeasurement(const Eigen::MatrixXd& state) {
     if (!useNonlinearFunctions_) {
         return h_ * state; // 如果不使用非线性函数，使用线性观测
     }
