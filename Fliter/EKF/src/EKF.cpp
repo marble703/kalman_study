@@ -208,7 +208,7 @@ Eigen::MatrixXd EKF::getState() const {
 }
 
 void EKF::initandCheck() {
-    // assert(f_.rows() == f_.cols() && "状态转移矩阵 f 必须是方阵");
+    assert(f_.rows() == f_.cols() && "状态转移矩阵 f 必须是方阵");
     assert(q_.rows() == q_.cols() && "过程噪声协方差矩阵 q 必须是方阵");
     assert(r_.rows() == r_.cols() && "观测噪声协方差矩阵 r 必须是方阵");
 
