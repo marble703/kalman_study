@@ -133,8 +133,20 @@ private:
             int i = idx / cols;
             int j = idx % cols;
 
-            if constexpr (std::is_invocable_v<std::decay_t<decltype(value)>>) {
-                // 如果是可调用对象
+            if constexpr (std::is_invocable_v<
+                              std::decay_t<decltype(value)>,
+                              std::shared_ptr<double>>) {
+                // 如果是接受 std::shared_ptr<double> 参数的可调用对象
+                auto func = [v = value](std::shared_ptr<double> arg) -> double { return v(arg); };
+                matrix.bindings_.emplace_back(i, j, func);
+                try {
+                    // 尝试获取初始值，如果 arg_ 已设置则传入
+                    matrix.matrix_(i, j) = matrix.arg_ ? value(matrix.arg_) : 0.0;
+                } catch (...) {
+                    matrix.matrix_(i, j) = 0.0;
+                }
+            } else if constexpr (std::is_invocable_v<std::decay_t<decltype(value)>>) {
+                // 如果是不接受参数的可调用对象
                 auto func = [v = value](std::shared_ptr<double>) -> double { return v(); };
                 matrix.bindings_.emplace_back(i, j, func);
                 try {
