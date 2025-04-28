@@ -1,8 +1,5 @@
 #pragma once
 
-#include <eigen3/Eigen/Dense>
-#include <iostream>
-
 #include "FliterBase/FilterBase.hpp"
 #include "Utils/BindMatrix.hpp"
 

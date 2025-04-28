@@ -1,9 +1,7 @@
 #pragma once
 
-#include <eigen3/Eigen/Dense>
-
-#include "Utils/BindMatrix.hpp"
 #include "FliterBase/FilterBase.hpp"
+#include "Utils/BindMatrix.hpp"
 
 class EKF: public FilterBase {
 public:
@@ -22,11 +20,11 @@ public:
      * @param dt // 时间间隔(固定)
      */
     EKF(const Eigen::MatrixXd f,
-       const Eigen::MatrixXd h,
-       const Eigen::MatrixXd b,
-       const Eigen::MatrixXd q,
-       const Eigen::MatrixXd r,
-       double dt = 0.0);
+        const Eigen::MatrixXd h,
+        const Eigen::MatrixXd b,
+        const Eigen::MatrixXd q,
+        const Eigen::MatrixXd r,
+        double dt = 0.0);
 
     /**
      * @brief 非线性EKF构造
@@ -41,13 +39,13 @@ public:
      * @param dt                 // 时间间隔(固定)
      */
     EKF(const StateTransitionFunction& stateTransitionFn,
-       const MeasurementFunction& measurementFn,
-       int stateSize,
-       int observationSize,
-       const Eigen::MatrixXd& b,
-       const Eigen::MatrixXd& q,
-       const Eigen::MatrixXd& r,
-       double dt = 0.0);
+        const MeasurementFunction& measurementFn,
+        int stateSize,
+        int observationSize,
+        const Eigen::MatrixXd& b,
+        const Eigen::MatrixXd& q,
+        const Eigen::MatrixXd& r,
+        double dt = 0.0);
 
     /**
      * @brief 动态 dt 构造
@@ -60,10 +58,10 @@ public:
      * @param dt // 时间间隔(可变)
      */
     EKF(utils::BindableMatrixXd f,
-       const Eigen::MatrixXd h,
-       const Eigen::MatrixXd b,
-       const Eigen::MatrixXd q,
-       const Eigen::MatrixXd r);
+        const Eigen::MatrixXd h,
+        const Eigen::MatrixXd b,
+        const Eigen::MatrixXd q,
+        const Eigen::MatrixXd r);
 
     /**
     * @brief 仅模型构造,仅初始化模型
@@ -174,8 +172,8 @@ private:
 
     // 模型矩阵(固定)
     utils::BindableMatrixXd f_; // 状态转移矩阵,大小为StateSize_ * StateSize_
-    const Eigen::MatrixXd h_;         // 观测矩阵,大小为ObservationSize_ * StateSize_
-    const Eigen::MatrixXd b_;         // 控制输入矩阵,大小为StateSize_ * ControlSize_
+    const Eigen::MatrixXd h_;   // 观测矩阵,大小为ObservationSize_ * StateSize_
+    const Eigen::MatrixXd b_;   // 控制输入矩阵,大小为StateSize_ * ControlSize_
 
     // 初始量
     Eigen::Matrix<double, Eigen::Dynamic, 1> initState_; // 初始状态矩阵,大小为StateSize_ * 1
@@ -204,7 +202,7 @@ private:
     StateTransitionFunction stateTransitionFn_; // 非线性状态转移函数
     MeasurementFunction measurementFn_;         // 非线性观测函数
     bool useNonlinearFunctions_ = false;        // 是否使用非线性函数
-    
+
     // 当前雅可比矩阵
     Eigen::MatrixXd F_jacobian_; // 状态转移雅可比矩阵
     Eigen::MatrixXd H_jacobian_; // 观测雅可比矩阵
