@@ -174,20 +174,20 @@ int main(int argc, char* argv[]) {
     rclcpp::WaitSet waitset;
     waitset.add_subscription(subscriber);
 
-    std::thread waitSetThread([&waitset, &kf, &publisher]() {
+    std::thread waitSetThread([&waitset, &kf, &publisher, &dt]() {
         while (rclcpp::ok()) {
-            auto wait_result = waitset.wait(std::chrono::milliseconds(9));
+            auto wait_result = waitset.wait(std::chrono::milliseconds(90));
             if (wait_result.kind() == rclcpp::WaitResultKind::Timeout) {
-                for (int i = 0; i < 3; ++i) {
-                    kf->predict();
-                    auto state = kf->getState();
-                    std::cout << "Predicted state: " << state(0, 0) << "\n" << std::endl;
-                    std::cout << "state: " << state << "\n" << std::endl;
-                    std_msgs::msg::Float32 Filteredmsg;
-                    Filteredmsg.data = state(0, 0);
-                    publisher->publish(Filteredmsg);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(3));
-                }
+                *dt = 0.09;
+                kf->predict();
+                auto state = kf->getState();
+                std::cout << "Predicted state: " << state(0, 0) << "\n" << std::endl;
+                std::cout << "state: " << state << "\n" << std::endl;
+                std_msgs::msg::Float32 Filteredmsg;
+                Filteredmsg.data = state(0, 0);
+                publisher->publish(Filteredmsg);
+                *dt = 0.003;
+                std::this_thread::sleep_for(std::chrono::milliseconds(3));
             }
         }
     });
