@@ -9,5 +9,7 @@ __pycache__
 Data
 Camera
 debug
+output
 
 gdb.txt
+points.txt
