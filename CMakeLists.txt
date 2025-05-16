@@ -54,12 +54,21 @@ target_include_directories(kf_lib PUBLIC
 
 include_directories(${PROJECT_SOURCE_DIR}/Fliter)
 
+add_library(data_loader_lib STATIC
+    DataLoader/DataLoader.cpp
+)
+
+target_include_directories(data_loader_lib PUBLIC
+    ${PROJECT_SOURCE_DIR}/DataLoader
+)
+
+
 # 将 kf_lib 添加到链接列表中
 target_link_libraries(${PROJECT_NAME}_node
     kf_lib
+    data_loader_lib
     ${cpp_typesupport_target}
     ${OpenCV_LIBS}
-
 )
 
 install(DIRECTORY
