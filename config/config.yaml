@@ -4,3 +4,79 @@
     debug: false
     # 滤波器类型
     fliter_type: 2
+    
+    # 是否使用生成的数据
+    use_generated_data: false
+
+    # 数据路径
+    data_path: /path/to/data
+    
+    # KF 参数
+    kf:
+      # 矩阵维度
+      state_dim: 2         # 状态维度
+      measure_dim: 1       # 观测维度
+      control_dim: 1       # 控制输入维度
+      
+      # 观测矩阵 (measure_dim x state_dim)
+      H: [1.0, 0.0]
+      
+      # 控制输入矩阵 (state_dim x control_dim)
+      B: [0.0, 1.0]
+      
+      # 过程噪声协方差矩阵 (state_dim x state_dim)
+      Q: [0.1, 0.0, 
+          0.0, 0.01]
+      
+      # 观测噪声协方差矩阵 (measure_dim x measure_dim)
+      R: [10.0]
+      
+      # 初始状态 (state_dim x 1)
+      init_state: [0.0, 0.0]
+    
+    # EKF 参数
+    ekf:
+      # 矩阵维度
+      state_dim: 3         # 状态维度
+      measure_dim: 1       # 观测维度
+      control_dim: 1       # 控制输入维度
+      
+      # 观测矩阵 (measure_dim x state_dim)
+      H: [1.0, 0.0, 0.0]
+      
+      # 控制输入矩阵 (state_dim x control_dim)
+      B: [0.0, 0.0, 1.0]
+      
+      # 过程噪声协方差矩阵 (state_dim x state_dim)
+      Q: [0.1, 0.0, 0.0,
+          0.0, 0.01, 0.0,
+          0.0, 0.0, 0.001]
+      
+      # 观测噪声协方差矩阵 (measure_dim x measure_dim)
+      R: [10.0]
+      
+      # 初始状态 (state_dim x 1)
+      init_state: [0.0, 0.0, 0.0]
+    
+    # UKF 参数
+    ukf:
+      # 矩阵维度
+      state_dim: 2         # 状态维度
+      measure_dim: 1       # 观测维度
+      control_dim: 1       # 控制输入维度
+      
+      # 观测矩阵 (measure_dim x state_dim)
+      H: [1.0, 0.0]
+      
+      # 控制输入矩阵 (state_dim x control_dim)
+      B: [0.0, 1.0]
+      
+      # 过程噪声协方差矩阵 (state_dim x state_dim)
+      Q: [0.001, 0.0,
+          0.0, 0.001]
+      
+      # 观测噪声协方差矩阵 (measure_dim x measure_dim)
+      R: [1000.0]
+      
+      # 初始状态 (state_dim x 1)
+      init_state: [0.0, 0.0]
