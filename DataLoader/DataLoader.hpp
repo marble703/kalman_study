@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace data_loader {
+namespace data {
 
 struct Target {
     double t;                // 时间戳
@@ -47,4 +47,4 @@ private:
     double frameInterval_ { 0.005 };        // 帧间时间间隔，默认为0.005秒(200Hz)
 };
 
-} // namespace data_loader
+} // namespace data

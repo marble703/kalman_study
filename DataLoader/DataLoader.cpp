@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace data_loader {
+namespace data {
 
 DataLoader::DataLoader(const std::string& filePath): filePath_(filePath) {
     // 加载数据
@@ -153,4 +153,4 @@ size_t DataLoader::getFrameCount() const {
     return data_[0].size();
 }
 
-} // namespace data_loader
+} // namespace data
