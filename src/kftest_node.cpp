@@ -90,14 +90,6 @@ public:
         }
         return matrix;
     }
-    
-    // 保留旧的固定大小矩阵方法（兼容现有代码）
-    template<typename T, int Rows, int Cols>
-    Eigen::Matrix<T, Rows, Cols> getMatrixFromConfig(const std::string& param_name) {
-        std::vector<T> param_values;
-        this->get_parameter(param_name, param_values);
-        return getMatrixFromParams<T, Rows, Cols>(param_values);
-    }
 };
 enum FilterType { KALMANFLITER = 0, EXTENDKALMANFLITER, UNSCENTEDKALMANFLITER };
 
@@ -146,7 +138,7 @@ int main(int argc, char* argv[]) {
         RCLCPP_INFO(node->get_logger(), "KF: 配置维度为 state_dim=%d, measure_dim=%d, control_dim=%d",
                    state_dim, measure_dim, control_dim);
         
-        // 从配置中读取矩阵（使用动态维度）
+        // 从配置中读取矩阵
         auto h = node->getMatrixFromConfig<double>("kf.H", measure_dim, state_dim); // 观测矩阵
         auto b = node->getMatrixFromConfig<double>("kf.B", state_dim, control_dim); // 控制输入矩阵
         auto q = node->getMatrixFromConfig<double>("kf.Q", state_dim, state_dim); // 过程噪声协方差矩阵
@@ -164,7 +156,7 @@ int main(int argc, char* argv[]) {
         // 创建动态状态转移矩阵
         // 根据状态维度动态创建状态转移矩阵
         utils::BindableMatrixXd dynamicBindMatrix(state_dim, state_dim);
-        // 设置状态转移矩阵的值（根据实际情况调整）
+        // 设置状态转移矩阵的值
         for (int i = 0; i < state_dim; i++) {
             for (int j = 0; j < state_dim; j++) {
                 if (i == j) {
@@ -192,7 +184,7 @@ int main(int argc, char* argv[]) {
         RCLCPP_INFO(node->get_logger(), "EKF: 配置维度为 state_dim=%d, measure_dim=%d, control_dim=%d",
                    state_dim, measure_dim, control_dim);
         
-        // 从配置中读取矩阵（使用动态维度）
+        // 从配置中读取矩阵
         auto h = node->getMatrixFromConfig<double>("ekf.H", measure_dim, state_dim); // 观测矩阵
         auto b = node->getMatrixFromConfig<double>("ekf.B", state_dim, control_dim); // 控制输入矩阵
         auto q = node->getMatrixFromConfig<double>("ekf.Q", state_dim, state_dim); // 过程噪声协方差矩阵
@@ -262,7 +254,7 @@ int main(int argc, char* argv[]) {
         RCLCPP_INFO(node->get_logger(), "UKF: 配置维度为 state_dim=%d, measure_dim=%d, control_dim=%d",
                    state_dim, measure_dim, control_dim);
         
-        // 从配置中读取矩阵（使用动态维度）
+        // 从配置中读取矩阵
         auto h = node->getMatrixFromConfig<double>("ukf.H", measure_dim, state_dim); // 观测矩阵
         auto b = node->getMatrixFromConfig<double>("ukf.B", state_dim, control_dim); // 控制输入矩阵
         auto q = node->getMatrixFromConfig<double>("ukf.Q", state_dim, state_dim); // 过程噪声协方差矩阵
