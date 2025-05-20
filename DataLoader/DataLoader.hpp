@@ -12,6 +12,14 @@ struct Target {
     double x, y, z;          // 位置
     double vx, vy, vz;       // 速度
     double yaw, roll, pitch; // 姿态角
+
+    std::vector<double> getallData() const {
+        return { x, y, z, vx, vy, vz, yaw, roll, pitch };
+    }
+
+    std::vector<double> getPoseData() const {
+        return { x, y, z, yaw, roll, pitch };
+    }
 };
 
 class DataLoader {

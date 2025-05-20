@@ -6,6 +6,7 @@
 #include <thread>
 
 #include "std_msgs/msg/float32.hpp" // IWYU pragma: keep
+#include "std_msgs/msg/float32_multi_array.hpp" // IWYU pragma: keep
 #include <iostream>
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
@@ -368,6 +369,46 @@ int main(int argc, char* argv[]) {
 
     if(use_generated_data) {
         // 使用生成的数据进行测试
+        std::string data_path = node->get_parameter("data_path").as_string();
+        data::DataLoader dataLoader(data_path);
+        if (!dataLoader.loadData()) {
+            RCLCPP_ERROR(node->get_logger(), "Failed to load data from file: %s", data_path.c_str());
+            return -1;
+        }
+        double timeInterval = dataLoader.getFrameInterval();
+        std::cout << "Frame interval: " << timeInterval << " seconds" << std::endl;
+        auto mainTargetData = dataLoader.getMainTargetData();
+        std::vector<std::vector<data::Target>> subTargetDatas;
+        for (int i = 0; i < dataLoader.getSubTargetCount(); i++) {
+            auto subTargetData = dataLoader.getSubTargetData(i);
+            std::cout << "Sub target " << i << " data size: " << subTargetData.size() << std::endl;
+            subTargetDatas.push_back(subTargetData);
+        }
+
+        auto dataPublisher = node->create_publisher<std_msgs::msg::Float32MultiArray>("shoot_info_data_all", 10);
+
+        auto dataTimer = node->create_wall_timer(
+            std::chrono::milliseconds(static_cast<int>(timeInterval * 1000)),
+            [&dataPublisher, &mainTargetData, &subTargetDatas]() {
+                static size_t index = 0;
+                if (index < mainTargetData.size()) {
+                    std_msgs::msg::Float32MultiArray msg;
+                    for (const auto& target : mainTargetData[index].getallData()) {
+                        msg.data.push_back(target);
+                    }
+                    for (const auto& subTargetData : subTargetDatas) {
+                        for (const auto& target : subTargetData[index].getallData()) {
+                            msg.data.push_back(target);
+                        }
+                    }
+                    dataPublisher->publish(msg);
+                    index++;
+                } else {
+                    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "All data published.");
+                }
+            });
+
+
     }
 
     rclcpp::spin(node);
