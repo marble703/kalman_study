@@ -52,7 +52,7 @@ private:
     std::string filePath_;                  // 数据文件路径
     std::vector<std::vector<Target>> data_; // 所有目标的数据(主目标+子目标)
     int subTargetCount_ { 0 };              // 子目标数量
-    double frameInterval_ { 0.005 };        // 帧间时间间隔，默认为0.005秒(200Hz)
+    double frameInterval_ { 0.003 };        // 帧间时间间隔，默认为0.003秒(333Hz)
 };
 
 } // namespace data

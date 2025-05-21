@@ -1,5 +1,6 @@
 #include "Fliter.hpp"
 #include "DataLoader.hpp"
+#include "Fliter.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -18,41 +19,45 @@ public:
         this->declare_parameter<bool>("debug", false);
         this->declare_parameter<bool>("use_generated_data", false);
         this->declare_parameter<std::string>("data_path", "");
-        
+
         // KF参数
         this->declare_parameter<int>("kf.state_dim", 2);
         this->declare_parameter<int>("kf.measure_dim", 1);
         this->declare_parameter<int>("kf.control_dim", 1);
-        this->declare_parameter<std::vector<double>>("kf.H", {1.0, 0.0});
-        this->declare_parameter<std::vector<double>>("kf.B", {0.0, 1.0});
-        this->declare_parameter<std::vector<double>>("kf.Q", {0.1, 0.0, 0.0, 0.01});
-        this->declare_parameter<std::vector<double>>("kf.R", {10.0});
-        this->declare_parameter<std::vector<double>>("kf.init_state", {0.0, 0.0});
-        
+        this->declare_parameter<std::vector<double>>("kf.H", { 1.0, 0.0 });
+        this->declare_parameter<std::vector<double>>("kf.B", { 0.0, 1.0 });
+        this->declare_parameter<std::vector<double>>("kf.Q", { 0.1, 0.0, 0.0, 0.01 });
+        this->declare_parameter<std::vector<double>>("kf.R", { 10.0 });
+        this->declare_parameter<std::vector<double>>("kf.init_state", { 0.0, 0.0 });
+
         // EKF参数
         this->declare_parameter<int>("ekf.state_dim", 3);
         this->declare_parameter<int>("ekf.measure_dim", 1);
         this->declare_parameter<int>("ekf.control_dim", 1);
-        this->declare_parameter<std::vector<double>>("ekf.H", {1.0, 0.0, 0.0});
-        this->declare_parameter<std::vector<double>>("ekf.B", {0.0, 0.0, 1.0});
-        this->declare_parameter<std::vector<double>>("ekf.Q", {0.1, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.001});
-        this->declare_parameter<std::vector<double>>("ekf.R", {10.0});
-        this->declare_parameter<std::vector<double>>("ekf.init_state", {0.0, 0.0, 0.0});
-        
+        this->declare_parameter<std::vector<double>>("ekf.H", { 1.0, 0.0, 0.0 });
+        this->declare_parameter<std::vector<double>>("ekf.B", { 0.0, 0.0, 1.0 });
+        this->declare_parameter<std::vector<double>>(
+            "ekf.Q",
+            { 0.1, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.001 }
+        );
+        this->declare_parameter<std::vector<double>>("ekf.R", { 10.0 });
+        this->declare_parameter<std::vector<double>>("ekf.init_state", { 0.0, 0.0, 0.0 });
+
         // UKF参数
         this->declare_parameter<int>("ukf.state_dim", 2);
         this->declare_parameter<int>("ukf.measure_dim", 1);
         this->declare_parameter<int>("ukf.control_dim", 1);
-        this->declare_parameter<std::vector<double>>("ukf.H", {1.0, 0.0});
-        this->declare_parameter<std::vector<double>>("ukf.B", {0.0, 1.0});
-        this->declare_parameter<std::vector<double>>("ukf.Q", {0.001, 0.0, 0.0, 0.001});
-        this->declare_parameter<std::vector<double>>("ukf.R", {1000.0});
-        this->declare_parameter<std::vector<double>>("ukf.init_state", {0.0, 0.0});
+        this->declare_parameter<std::vector<double>>("ukf.H", { 1.0, 0.0 });
+        this->declare_parameter<std::vector<double>>("ukf.B", { 0.0, 1.0 });
+        this->declare_parameter<std::vector<double>>("ukf.Q", { 0.001, 0.0, 0.0, 0.001 });
+        this->declare_parameter<std::vector<double>>("ukf.R", { 1000.0 });
+        this->declare_parameter<std::vector<double>>("ukf.init_state", { 0.0, 0.0 });
     }
-    
+
     // 辅助函数：从参数向量构建动态大小矩阵
     template<typename T>
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> getMatrixFromParams(const std::vector<T>& params, int rows, int cols) {
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>
+    getMatrixFromParams(const std::vector<T>& params, int rows, int cols) {
         Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> matrix(rows, cols);
         if (static_cast<int>(params.size()) == rows * cols) {
             for (int i = 0; i < rows; i++) {
@@ -61,20 +66,26 @@ public:
                 }
             }
         } else {
-            RCLCPP_ERROR(this->get_logger(), "参数数量与矩阵维度不匹配: %ld != %d*%d", 
-                        params.size(), rows, cols);
+            RCLCPP_ERROR(
+                this->get_logger(),
+                "参数数量与矩阵维度不匹配: %ld != %d*%d",
+                params.size(),
+                rows,
+                cols
+            );
         }
         return matrix;
     }
-    
+
     // 从配置中获取动态大小矩阵
     template<typename T>
-    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> getMatrixFromConfig(const std::string& param_name, int rows, int cols) {
+    Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>
+    getMatrixFromConfig(const std::string& param_name, int rows, int cols) {
         std::vector<T> param_values;
         this->get_parameter(param_name, param_values);
         return getMatrixFromParams<T>(param_values, rows, cols);
     }
-    
+
     // 保留旧的固定大小矩阵方法（兼容现有代码）
     template<typename T, int Rows, int Cols>
     Eigen::Matrix<T, Rows, Cols> getMatrixFromParams(const std::vector<T>& params) {
@@ -86,8 +97,13 @@ public:
                 }
             }
         } else {
-            RCLCPP_ERROR(this->get_logger(), "参数数量与矩阵维度不匹配: %ld != %d*%d", 
-                        params.size(), Rows, Cols);
+            RCLCPP_ERROR(
+                this->get_logger(),
+                "参数数量与矩阵维度不匹配: %ld != %d*%d",
+                params.size(),
+                Rows,
+                Cols
+            );
         }
         return matrix;
     }
@@ -136,15 +152,26 @@ int main(int argc, char* argv[]) {
         int measure_dim = node->get_parameter("kf.measure_dim").as_int();
         int control_dim = node->get_parameter("kf.control_dim").as_int();
 
-        RCLCPP_INFO(node->get_logger(), "KF: 配置维度为 state_dim=%d, measure_dim=%d, control_dim=%d",
-                   state_dim, measure_dim, control_dim);
-        
+        RCLCPP_INFO(
+            node->get_logger(),
+            "KF: 配置维度为 state_dim=%d, measure_dim=%d, control_dim=%d",
+            state_dim,
+            measure_dim,
+            control_dim
+        );
+
         // 从配置中读取矩阵
         auto h = node->getMatrixFromConfig<double>("kf.H", measure_dim, state_dim); // 观测矩阵
         auto b = node->getMatrixFromConfig<double>("kf.B", state_dim, control_dim); // 控制输入矩阵
-        auto q = node->getMatrixFromConfig<double>("kf.Q", state_dim, state_dim); // 过程噪声协方差矩阵
-        auto r = node->getMatrixFromConfig<double>("kf.R", measure_dim, measure_dim); // 观测噪声协方差矩阵
-        auto initState = node->getMatrixFromConfig<double>("kf.init_state", state_dim, 1); // 初始状态矩阵
+        auto q =
+            node->getMatrixFromConfig<double>("kf.Q", state_dim, state_dim); // 过程噪声协方差矩阵
+        auto r = node->getMatrixFromConfig<double>(
+            "kf.R",
+            measure_dim,
+            measure_dim
+        ); // 观测噪声协方差矩阵
+        auto initState =
+            node->getMatrixFromConfig<double>("kf.init_state", state_dim, 1); // 初始状态矩阵
 
         // 打印读取到的矩阵参数
         RCLCPP_INFO(node->get_logger(), "KF参数已加载");
@@ -165,7 +192,7 @@ int main(int argc, char* argv[]) {
                 } else if (j == i + 1 && i < state_dim - 1) {
                     dynamicBindMatrix.getMatrix()(i, j) = *dt;  // 上对角线元素为dt
                 } else {
-                    dynamicBindMatrix.getMatrix()(i, j) = 0.0;  // 其他元素为0
+                    dynamicBindMatrix.getMatrix()(i, j) = 0.0; // 其他元素为0
                 }
             }
         }
@@ -182,15 +209,26 @@ int main(int argc, char* argv[]) {
         int measure_dim = node->get_parameter("ekf.measure_dim").as_int();
         int control_dim = node->get_parameter("ekf.control_dim").as_int();
 
-        RCLCPP_INFO(node->get_logger(), "EKF: 配置维度为 state_dim=%d, measure_dim=%d, control_dim=%d",
-                   state_dim, measure_dim, control_dim);
-        
+        RCLCPP_INFO(
+            node->get_logger(),
+            "EKF: 配置维度为 state_dim=%d, measure_dim=%d, control_dim=%d",
+            state_dim,
+            measure_dim,
+            control_dim
+        );
+
         // 从配置中读取矩阵
         auto h = node->getMatrixFromConfig<double>("ekf.H", measure_dim, state_dim); // 观测矩阵
         auto b = node->getMatrixFromConfig<double>("ekf.B", state_dim, control_dim); // 控制输入矩阵
-        auto q = node->getMatrixFromConfig<double>("ekf.Q", state_dim, state_dim); // 过程噪声协方差矩阵
-        auto r = node->getMatrixFromConfig<double>("ekf.R", measure_dim, measure_dim); // 观测噪声协方差矩阵
-        auto initState = node->getMatrixFromConfig<double>("ekf.init_state", state_dim, 1); // 初始状态矩阵
+        auto q =
+            node->getMatrixFromConfig<double>("ekf.Q", state_dim, state_dim); // 过程噪声协方差矩阵
+        auto r = node->getMatrixFromConfig<double>(
+            "ekf.R",
+            measure_dim,
+            measure_dim
+        ); // 观测噪声协方差矩阵
+        auto initState =
+            node->getMatrixFromConfig<double>("ekf.init_state", state_dim, 1); // 初始状态矩阵
 
         // 打印读取到的矩阵参数
         RCLCPP_INFO(node->get_logger(), "EKF参数已加载");
@@ -201,14 +239,15 @@ int main(int argc, char* argv[]) {
         std::cout << "initState =\n" << initState << std::endl;
 
         // 定义非线性状态转移函数
-        auto stateFn = [state_dim](const Eigen::MatrixXd& x, std::shared_ptr<double> dt) -> Eigen::MatrixXd {
+        auto stateFn =
+            [state_dim](const Eigen::MatrixXd& x, std::shared_ptr<double> dt) -> Eigen::MatrixXd {
             Eigen::MatrixXd result(state_dim, 1);
             // 默认实现针对三维状态 [位置, 速度, 加速度]
             if (state_dim >= 3) {
                 result(0, 0) = x(0, 0) + x(1, 0) * *dt + 0.5 * x(2, 0) * (*dt) * (*dt);
                 result(1, 0) = x(1, 0) + x(2, 0) * *dt;
                 result(2, 0) = x(2, 0);
-                
+
                 // 对于更高维度的状态，保持不变
                 for (int i = 3; i < state_dim; i++) {
                     result(i, 0) = x(i, 0);
@@ -252,15 +291,26 @@ int main(int argc, char* argv[]) {
         int measure_dim = node->get_parameter("ukf.measure_dim").as_int();
         int control_dim = node->get_parameter("ukf.control_dim").as_int();
 
-        RCLCPP_INFO(node->get_logger(), "UKF: 配置维度为 state_dim=%d, measure_dim=%d, control_dim=%d",
-                   state_dim, measure_dim, control_dim);
-        
+        RCLCPP_INFO(
+            node->get_logger(),
+            "UKF: 配置维度为 state_dim=%d, measure_dim=%d, control_dim=%d",
+            state_dim,
+            measure_dim,
+            control_dim
+        );
+
         // 从配置中读取矩阵
         auto h = node->getMatrixFromConfig<double>("ukf.H", measure_dim, state_dim); // 观测矩阵
         auto b = node->getMatrixFromConfig<double>("ukf.B", state_dim, control_dim); // 控制输入矩阵
-        auto q = node->getMatrixFromConfig<double>("ukf.Q", state_dim, state_dim); // 过程噪声协方差矩阵
-        auto r = node->getMatrixFromConfig<double>("ukf.R", measure_dim, measure_dim); // 观测噪声协方差矩阵
-        auto initState = node->getMatrixFromConfig<double>("ukf.init_state", state_dim, 1); // 初始状态矩阵
+        auto q =
+            node->getMatrixFromConfig<double>("ukf.Q", state_dim, state_dim); // 过程噪声协方差矩阵
+        auto r = node->getMatrixFromConfig<double>(
+            "ukf.R",
+            measure_dim,
+            measure_dim
+        ); // 观测噪声协方差矩阵
+        auto initState =
+            node->getMatrixFromConfig<double>("ukf.init_state", state_dim, 1); // 初始状态矩阵
 
         // 打印读取到的矩阵参数
         RCLCPP_INFO(node->get_logger(), "UKF参数已加载");
@@ -274,12 +324,12 @@ int main(int argc, char* argv[]) {
         auto f = [state_dim](const Eigen::MatrixXd& x) -> Eigen::MatrixXd {
             // 状态转移方程，动态适应状态维度
             Eigen::MatrixXd result(state_dim, 1);
-            
+
             if (state_dim > 1) {
                 // 简单运动学模型：位置 = 上次位置 + 速度
                 result(0, 0) = x(0, 0) + x(1, 0);
-                result(1, 0) = x(1, 0);  // 速度不变
-                
+                result(1, 0) = x(1, 0); // 速度不变
+
                 // 对于更高维度的状态，保持不变
                 for (int i = 2; i < state_dim; i++) {
                     result(i, 0) = x(i, 0);
@@ -288,7 +338,7 @@ int main(int argc, char* argv[]) {
                 // 只有一维状态时，保持不变
                 result(0, 0) = x(0, 0);
             }
-            
+
             return result;
         };
 
@@ -323,7 +373,7 @@ int main(int argc, char* argv[]) {
             // 创建动态大小的观测值矩阵
             Eigen::MatrixXd measurement(1, 1);
             measurement(0, 0) = yaw;
-            
+
             kf->predict();
             kf->update(measurement);
 
@@ -367,12 +417,16 @@ int main(int argc, char* argv[]) {
     // 分离线程，让主线程运行 spin
     waitSetThread.detach();
 
-    if(use_generated_data) {
+    if (use_generated_data) {
         // 使用生成的数据进行测试
         std::string data_path = node->get_parameter("data_path").as_string();
         data::DataLoader dataLoader(data_path);
         if (!dataLoader.loadData()) {
-            RCLCPP_ERROR(node->get_logger(), "Failed to load data from file: %s", data_path.c_str());
+            RCLCPP_ERROR(
+                node->get_logger(),
+                "Failed to load data from file: %s",
+                data_path.c_str()
+            );
             return -1;
         }
         double timeInterval = dataLoader.getFrameInterval();
@@ -385,30 +439,30 @@ int main(int argc, char* argv[]) {
             subTargetDatas.push_back(subTargetData);
         }
 
-        auto dataPublisher = node->create_publisher<std_msgs::msg::Float32MultiArray>("shoot_info_data_all", 10);
+        auto origindataPublisher =
+            node->create_publisher<std_msgs::msg::Float32MultiArray>("shoot_info_data_all", 10);
 
         auto dataTimer = node->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(timeInterval * 1000)),
-            [&dataPublisher, &mainTargetData, &subTargetDatas]() {
+            [&origindataPublisher, &mainTargetData, &subTargetDatas]() {
                 static size_t index = 0;
                 if (index < mainTargetData.size()) {
                     std_msgs::msg::Float32MultiArray msg;
-                    for (const auto& target : mainTargetData[index].getallData()) {
+                    for (const auto& target: mainTargetData[index].getallData()) {
                         msg.data.push_back(target);
                     }
-                    for (const auto& subTargetData : subTargetDatas) {
-                        for (const auto& target : subTargetData[index].getallData()) {
+                    for (const auto& subTargetData: subTargetDatas) {
+                        for (const auto& target: subTargetData[index].getallData()) {
                             msg.data.push_back(target);
                         }
                     }
-                    dataPublisher->publish(msg);
+                    origindataPublisher->publish(msg);
                     index++;
                 } else {
                     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "All data published.");
                 }
-            });
-
-
+            }
+        );
     }
 
     rclcpp::spin(node);
