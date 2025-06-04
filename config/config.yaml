@@ -6,10 +6,10 @@
     fliter_type: 2
     
     # 是否使用生成的数据
-    use_generated_data: false
+    use_generated_data: true
 
     # 数据路径
-    data_path: /path/to/data
+    data_path: DataLoader/DataGenerator/output/trajectory_20250509_221125.txt
     
     # KF 参数
     kf:

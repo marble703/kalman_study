@@ -441,11 +441,11 @@ int main(int argc, char* argv[]) {
         auto origindataPublisher =
             node->create_publisher<std_msgs::msg::Float32MultiArray>("shoot_info_data_all", 10);
         auto observeddataPublisher =
-            node->create_publisher<std_msgs::msg::Float32MultiArray>("shoot_info_data", 10);
+            node->create_publisher<std_msgs::msg::Float32MultiArray>("shoot_info_data_obv", 10);
 
         auto dataTimer = node->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(timeInterval * 1000)),
-            [&origindataPublisher, &mainTargetData, &subTargetDatas]() {
+            [&origindataPublisher, &mainTargetData, &subTargetDatas, &observeddataPublisher]() {
                 static size_t index = 0;
                 if (index < mainTargetData.size()) {
                     std_msgs::msg::Float32MultiArray msg_all;
@@ -469,7 +469,7 @@ int main(int argc, char* argv[]) {
                             }
                         }
                     }
-
+                    observeddataPublisher->publish(msg_obs);
                     index++;
                 } else {
                     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "All data published.");
