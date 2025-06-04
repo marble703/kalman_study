@@ -1,4 +1,3 @@
-#include "Fliter.hpp"
 #include "DataLoader.hpp"
 #include "Fliter.hpp"
 
@@ -6,7 +5,7 @@
 #include <cstdint>
 #include <thread>
 
-#include "std_msgs/msg/float32.hpp" // IWYU pragma: keep
+#include "std_msgs/msg/float32.hpp"             // IWYU pragma: keep
 #include "std_msgs/msg/float32_multi_array.hpp" // IWYU pragma: keep
 #include <iostream>
 #include <memory>
@@ -188,9 +187,9 @@ int main(int argc, char* argv[]) {
         for (int i = 0; i < state_dim; i++) {
             for (int j = 0; j < state_dim; j++) {
                 if (i == j) {
-                    dynamicBindMatrix.getMatrix()(i, j) = 1.0;  // 对角线元素为1
+                    dynamicBindMatrix.getMatrix()(i, j) = 1.0; // 对角线元素为1
                 } else if (j == i + 1 && i < state_dim - 1) {
-                    dynamicBindMatrix.getMatrix()(i, j) = *dt;  // 上对角线元素为dt
+                    dynamicBindMatrix.getMatrix()(i, j) = *dt; // 上对角线元素为dt
                 } else {
                     dynamicBindMatrix.getMatrix()(i, j) = 0.0; // 其他元素为0
                 }
@@ -441,22 +440,36 @@ int main(int argc, char* argv[]) {
 
         auto origindataPublisher =
             node->create_publisher<std_msgs::msg::Float32MultiArray>("shoot_info_data_all", 10);
+        auto observeddataPublisher =
+            node->create_publisher<std_msgs::msg::Float32MultiArray>("shoot_info_data", 10);
 
         auto dataTimer = node->create_wall_timer(
             std::chrono::milliseconds(static_cast<int>(timeInterval * 1000)),
             [&origindataPublisher, &mainTargetData, &subTargetDatas]() {
                 static size_t index = 0;
                 if (index < mainTargetData.size()) {
-                    std_msgs::msg::Float32MultiArray msg;
+                    std_msgs::msg::Float32MultiArray msg_all;
+                    std_msgs::msg::Float32MultiArray msg_obs;
+
                     for (const auto& target: mainTargetData[index].getallData()) {
-                        msg.data.push_back(target);
+                        msg_all.data.push_back(target);
                     }
                     for (const auto& subTargetData: subTargetDatas) {
                         for (const auto& target: subTargetData[index].getallData()) {
-                            msg.data.push_back(target);
+                            msg_all.data.push_back(target);
                         }
                     }
-                    origindataPublisher->publish(msg);
+                    origindataPublisher->publish(msg_all);
+
+                    for (const auto& subTargetData: subTargetDatas) {
+                        const data::Target& target = subTargetData[index];
+                        if (target.isObserved()) {
+                            for (const auto& poseData: target.getPoseData()) {
+                                msg_obs.data.push_back(poseData);
+                            }
+                        }
+                    }
+
                     index++;
                 } else {
                     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "All data published.");

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -19,6 +20,15 @@ struct Target {
 
     std::vector<double> getPoseData() const {
         return { x, y, z, yaw, roll, pitch };
+    }
+    // 该目标是否可被观测
+    bool isObserved() const {
+        // 目前直接写死了 30 度的观测范围
+        if (std::abs(atan2(y, x) - yaw) < 30 * M_PI / 180) {
+            return true;
+        } else {
+            return false;
+        }
     }
 };
 
